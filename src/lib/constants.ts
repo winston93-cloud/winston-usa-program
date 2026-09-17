@@ -1,4 +1,8 @@
-export const CICLO_ESCOLAR = '2026–2027'
+/** Etiqueta UI; el número Winston (22 = 2025–2026) alimenta el sync de pagos. */
+export const CICLO_ESCOLAR = '2025–2026'
+export const CICLO_NUMERO = 22
+/** Conceptos Winston USA / Doble titulación → pago1 / pago2 / pago3 */
+export const CONCEPTOS_USA = ['23', '24', '25'] as const
 export const CUOTA_ANUAL_USD = 350
 export const PAGO_1_USD = 100
 export const PAGO_2_USD = 125

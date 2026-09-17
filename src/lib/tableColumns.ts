@@ -2,7 +2,7 @@ import { PAGO_1_USD, PAGO_2_USD, PAGO_3_USD, formatUsd } from './constants'
 
 export type ColumnId =
   | 'folio'
-  | 'matricula'
+  | 'alumnoRef'
   | 'estado'
   | 'nivel'
   | 'grado'
@@ -38,7 +38,7 @@ export type TableColumn = {
 
 export const TABLE_COLUMNS: TableColumn[] = [
   { id: 'folio', label: 'Folio', width: 100 },
-  { id: 'matricula', label: 'Matrícula', width: 118 },
+  { id: 'alumnoRef', label: 'Ref', width: 110 },
   { id: 'estado', label: 'Estado', width: 210 },
   { id: 'nivel', label: 'Nivel', width: 124 },
   { id: 'grado', label: 'Grado', width: 90 },
@@ -88,7 +88,7 @@ export const COLUMN_GROUPS: ColumnGroup[] = [
   {
     id: 'identidad',
     label: 'Identidad',
-    columnIds: ['folio', 'matricula', 'estado', 'nivel', 'grado'],
+    columnIds: ['folio', 'alumnoRef', 'estado', 'nivel', 'grado'],
   },
   {
     id: 'personales',

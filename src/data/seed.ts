@@ -2,8 +2,9 @@ import type { Alumno } from '../types/alumno'
 
 export const SEED_ALUMNOS: Alumno[] = [
   {
-    id: 'a1',
+    id: '11111111-1111-4111-8111-111111111101',
     folio: 'A-001',
+    alumnoRef: '',
     matricula: 'K-26-014',
     nivel: 'Kinder',
     estado: 'Activo',
@@ -30,8 +31,9 @@ export const SEED_ALUMNOS: Alumno[] = [
     observaciones: '',
   },
   {
-    id: 'a2',
+    id: '11111111-1111-4111-8111-111111111102',
     folio: 'A-002',
+    alumnoRef: '',
     matricula: 'K-26-021',
     nivel: 'Kinder',
     estado: 'Activo',
@@ -58,8 +60,9 @@ export const SEED_ALUMNOS: Alumno[] = [
     observaciones: 'Parcialidades 1 y 2 el mismo día.',
   },
   {
-    id: 'a3',
+    id: '11111111-1111-4111-8111-111111111103',
     folio: 'A-003',
+    alumnoRef: '',
     matricula: 'P-26-108',
     nivel: 'Primaria',
     estado: 'Activo',
@@ -86,8 +89,9 @@ export const SEED_ALUMNOS: Alumno[] = [
     observaciones: '',
   },
   {
-    id: 'a4',
+    id: '11111111-1111-4111-8111-111111111104',
     folio: 'A-004',
+    alumnoRef: '',
     matricula: 'P-26-119',
     nivel: 'Primaria',
     estado: 'Activo',
@@ -114,8 +118,9 @@ export const SEED_ALUMNOS: Alumno[] = [
     observaciones: 'Pendiente primer pago para inscripción.',
   },
   {
-    id: 'a5',
+    id: '11111111-1111-4111-8111-111111111105',
     folio: 'A-005',
+    alumnoRef: '',
     matricula: 'S-26-033',
     nivel: 'Secundaria',
     estado: 'Activo',
@@ -142,8 +147,9 @@ export const SEED_ALUMNOS: Alumno[] = [
     observaciones: 'Liquidada; falta validación de archivo final.',
   },
   {
-    id: 'a6',
+    id: '11111111-1111-4111-8111-111111111106',
     folio: 'A-006',
+    alumnoRef: '',
     matricula: 'S-26-041',
     nivel: 'Secundaria',
     estado: 'Baja - gestionar devolución',
@@ -170,8 +176,9 @@ export const SEED_ALUMNOS: Alumno[] = [
     observaciones: 'Cambio de residencia. Solicitan reembolso del 1.er pago.',
   },
   {
-    id: 'a7',
+    id: '11111111-1111-4111-8111-111111111107',
     folio: 'A-007',
+    alumnoRef: '',
     matricula: 'P-26-090',
     nivel: 'Primaria',
     estado: 'Reembolso Realizado',

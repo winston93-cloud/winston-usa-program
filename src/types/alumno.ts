@@ -31,6 +31,9 @@ export type ChipFiltro =
 export type Alumno = {
   id: string
   folio: string
+  /** alumno_ref de Winston (lo que se captura para autollenar) */
+  alumnoRef: string
+  /** alumno_clave (matrícula), se rellena al buscar por ref */
   matricula: string
   nivel: Nivel
   estado: EstadoAlumno
