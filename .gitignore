@@ -40,3 +40,7 @@ dist-ssr
 .roo
 .trae
 .windsurf
+
+.vercel
+.env*
+!.env.example
