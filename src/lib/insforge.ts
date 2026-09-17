@@ -1,12 +1,10 @@
 import { createClient } from '@insforge/sdk'
 
-const baseUrl = import.meta.env.VITE_INSFORGE_URL as string | undefined
-const anonKey = import.meta.env.VITE_INSFORGE_ANON_KEY as string | undefined
+const baseUrl = import.meta.env.INSFORGE_URL as string | undefined
+const anonKey = import.meta.env.INSFORGE_ANON_KEY as string | undefined
 
 if (!baseUrl || !anonKey) {
-  console.warn(
-    'InsForge: faltan VITE_INSFORGE_URL o VITE_INSFORGE_ANON_KEY en .env',
-  )
+  console.warn('InsForge: faltan INSFORGE_URL o INSFORGE_ANON_KEY en .env')
 }
 
 export const insforge = createClient({

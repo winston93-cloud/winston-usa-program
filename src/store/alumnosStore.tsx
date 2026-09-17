@@ -92,7 +92,7 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async () => {
     if (!isInsforgeConfigured) {
-      setError('InsForge no configurado (VITE_INSFORGE_URL / ANON_KEY).')
+      setError('InsForge no configurado (INSFORGE_URL / INSFORGE_ANON_KEY).')
       setAlumnos([])
       setLoading(false)
       return
@@ -189,7 +189,7 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
 
   const syncFromPagos = useCallback(async () => {
     if (!isInsforgeConfigured) {
-      setError('InsForge no configurado (VITE_INSFORGE_URL / ANON_KEY).')
+      setError('InsForge no configurado (INSFORGE_URL / INSFORGE_ANON_KEY).')
       return null
     }
     setSyncing(true)
