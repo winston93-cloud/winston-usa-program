@@ -1,0 +1,254 @@
+@import 'tailwindcss';
+
+/*
+  =============================================================================
+  TEMA DE COLORES — edita SOLO los valores hex aquí
+  =============================================================================
+  Tailwind v4 (@theme) convierte cada --color-* en una clase útil:
+    bg-brand, text-brand, border-brand, bg-brand-soft, text-ink-muted, etc.
+
+  Cómo usar:
+  1. Cambia el hex de la variable (ej. --color-brand: #0f4c81).
+  2. Guarda; Vite recarga y toda la UI que use esa clase se actualiza.
+  3. No hace falta tocar los componentes salvo que quieras otro token.
+
+  Mapa rápido (qué controla cada grupo):
+  -----------------------------------------------------------------------------
+  MARCA (header, botones primarios, focos)
+    brand            → fondo del header, botón "Agregar alumno"
+    brand-hover      → hover de esos botones
+    brand-accent     → anillo/borde al enfocar inputs
+    brand-soft       → fondo general de la página
+    brand-muted      → anillo suave de focus
+    brand-border     → bordes de tabla, chips, paneles
+    brand-tint       → tintes muy claros (si se usan)
+
+  TEXTO
+    ink              → texto principal
+    ink-muted        → texto secundario / placeholders calculados
+    on-brand         → texto sobre fondos brand (header)
+    on-brand-muted   → subtítulo del header
+
+  CELDAS DE TABLA
+    cell             → fondo editable / paneles blancos
+    cell-calc        → celdas de solo lectura (total, saldo, estatus…)
+
+  BAJA / ALERTAS (campos faltantes, no el estado de fila)
+    baja, baja-border, baja-text → ring de validación en inputs vacíos
+
+  ESTADO DEL ALUMNO — celda e input van SEPARADOS
+    Cada estado tiene:
+      *-cell   → fondo de la CELDA (detrás del control)
+      *-input  → fondo del INPUT / SELECT
+      *-border → borde del control
+      *-text   → color del texto del select Estado
+
+    Activo:
+      la celda NO se tintea (sigue la franja blanco/azul de sección)
+      el select Estado usa verde apagado (sin neón)
+    Baja (alerta):
+      la celda NO se tintea; solo el select Estado en rojo apagado
+    Reembolso (discreto):
+      select Estado gris; no compite con Activo
+
+  CHIPS DE FILTRO (barra de KPIs)
+    chip-todos … chip-devoluciones → color idle/activo de cada chip
+    chip-recaudado / chip-saldo    → montos debajo de los chips
+    chip-saldo-soft                → fondo opcional del saldo
+
+  SECCIONES DE COLUMNAS (barra Identidad | Pagos | …)
+    sec-white / sec-white-head → franjas claras de columnas
+    sec-blue / sec-blue-head   → franjas azules alternadas
+    sec-bar                    → fondo de la barra de secciones
+    sec-bar-text               → texto de esa barra
+    sec-bar-muted              → texto atenuado sobre la barra (si se usa)
+
+  TIPOGRAFÍA (también en @theme)
+    --font-sans    → UI, tabla, chips, botones
+    --font-display → títulos del header
+
+  MODO CLARO / OSCURO (data-theme en <html>)
+    Claro  = valores de @theme (como se veía antes)
+    Oscuro = bloque [data-theme="dark"] más abajo
+             (fondos blancos → azules sobrios tipo header;
+              texto ink se aclara para leer)
+    Por defecto: dark (ver index.html + THEME_KEY)
+  =============================================================================
+*/
+
+@theme {
+  /* --- Tipografía --- */
+  --font-sans: 'Figtree', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Sora', 'Figtree', system-ui, sans-serif;
+
+  /* --- Marca --- */
+  --color-brand: #0f4c81;
+  --color-brand-hover: #0b3a63;
+  --color-brand-accent: #1d6fb8;
+  --color-brand-soft: #e8f1fb;
+  --color-brand-muted: #d6e7f7;
+  --color-brand-border: #b9d4ee;
+  --color-brand-tint: #f3f8fd;
+  /* Texto azul sobre superficies (modales, etc.); no es el fondo del header */
+  --color-brand-on-surface: #0f4c81;
+
+  /* --- Texto --- */
+  --color-ink: #1e293b;
+  --color-ink-muted: #64748b;
+  --color-on-brand: #ffffff;
+  --color-on-brand-muted: #c5dff5;
+
+  /* --- Celdas --- */
+  --color-cell: #ffffff;
+  --color-cell-calc: #eef2f7;
+
+  /* --- Validación (campos vacíos en baja) --- */
+  --color-baja: #fef2f2;
+  --color-baja-border: #fca5a5;
+  --color-baja-text: #b91c1c;
+
+  /*
+    --- Estado alumno (edita cell / input / border / text por separado) ---
+    Activo / Baja: la CELDA ya no se tintea (sigue franja blanco/azul).
+    Solo el select Estado y, si aplica, borde suave de inputs.
+    Usa verdes/rojos apagados (poca saturación) para no “vibrar” sobre azul.
+  */
+  --color-estado-activo-cell: transparent;
+  --color-estado-activo-input: #e8f0ec;
+  --color-estado-activo-border: #9bb5a8;
+  --color-estado-activo-text: #3d6b58;
+
+  /* Baja: alerta solo en el control; celda = franja de sección */
+  --color-estado-baja-cell: transparent;
+  --color-estado-baja-input: #f3ecec;
+  --color-estado-baja-border: #c4a4a8;
+  --color-estado-baja-text: #8a4550;
+
+  /* Reembolso = discreto */
+  --color-estado-reembolso-cell: transparent;
+  --color-estado-reembolso-input: #eef0f2;
+  --color-estado-reembolso-border: #b8c0c8;
+  --color-estado-reembolso-text: #64748b;
+
+  /* --- Chips filtro --- */
+  --color-chip-todos: #0f4c81;
+  --color-chip-inscritos: #0284c7;
+  --color-chip-activos: #059669;
+  --color-chip-liquidados: #0f766e;
+  --color-chip-archivo: #0284c7;
+  --color-chip-devoluciones: #e11d48;
+  --color-chip-recaudado: #047857;
+  --color-chip-saldo: #c2410c;
+  --color-chip-saldo-soft: #fff7ed;
+
+  /* --- Franjas de columnas (blanco / azul suave) --- */
+  --color-sec-white: #ffffff;
+  --color-sec-white-head: #f8fbff;
+  --color-sec-blue: #e9efff;
+  --color-sec-blue-head: #d9ebff;
+
+  /* --- Barra de secciones (Identidad, Pagos…) --- */
+  --color-sec-bar: #2f6fad;
+  --color-sec-bar-text: #ffffff;
+  --color-sec-bar-muted: #d7e8f8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+  background: var(--color-brand-soft);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+input,
+select,
+button,
+textarea {
+  font-family: inherit;
+}
+
+input[type='date']::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+/*
+  =============================================================================
+  MODO OSCURO — solo reescribe tokens de superficie / texto
+  Edita aquí los azules oscuros. El modo claro usa @theme sin cambios.
+  Header (bg-brand) se mantiene; fondos blancos pasan a azul sobrio.
+  =============================================================================
+*/
+[data-theme='dark'] {
+  /* Página y paneles (antes blancos / brand-soft claro) */
+  --color-brand-soft: #335d7ed0;
+  --color-brand-muted: #143d5c;
+  --color-brand-border: #1e4f73;
+  --color-brand-tint: #0c3558;
+  --color-brand-on-surface: #9ec5e8;
+
+  --color-ink: #e8f1fb;
+  --color-ink-muted: #9db8d4;
+
+  --color-cell: #0d3a5c;
+  --color-cell-calc: #0a3354;
+
+  /* Franjas de columnas */
+  --color-sec-white: #0d3a5c;
+  --color-sec-white-head: #114468;
+  --color-sec-blue: #0f4568;
+  --color-sec-blue-head: #15507a;
+
+  /* Chips idle: menos neón sobre azul oscuro */
+  --color-chip-todos: #3272aa;
+  --color-chip-inscritos: #6ba8c9;
+  --color-chip-activos: #6a9e88;
+  --color-chip-liquidados: #5f9a90;
+  --color-chip-archivo: #6ba8c9;
+  --color-chip-devoluciones: #c17b86;
+  --color-chip-recaudado: #7bd3ae;
+  --color-chip-saldo: #f1af79;
+
+  /*
+    Estados en oscuro: tintes muy suaves (mezcla con el azul de celda).
+    Sin verdes/rojos eléctricos; la celda de fila ya no se pinta.
+  */
+  --color-estado-activo-input: #1d9659a2;
+  --color-estado-activo-border: #5a796e;
+  --color-estado-activo-text: #a3c4b5;
+
+  --color-estado-baja-cell: transparent;
+  --color-estado-baja-input: #3d3548;
+  --color-estado-baja-border: #8a6a72;
+  --color-estado-baja-text: #d4a8b0;
+
+  --color-estado-reembolso-cell: transparent;
+  --color-estado-reembolso-input: #123548;
+  --color-estado-reembolso-border: #4a6270;
+  --color-estado-reembolso-text: #9db0bc;
+
+  --color-baja: #3d3548;
+  --color-baja-border: #8a6a72;
+  --color-baja-text: #d4a8b0;
+}
+
+/* Indicador de fecha más visible sobre fondos oscuros */
+[data-theme='dark'] input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(0.85);
+  opacity: 0.85;
+}

@@ -1,0 +1,37 @@
+Genera la base para el siguiente proyecto, es un dashboard simple que busca mantener
+el orden de pagos, en colores azules principalmente, y stack de react y tailwind, typescript se opuca solo un frontedn		 	
+
+Nombre Proyecto
+
+CONTROL DE ALUMNOS 																								
+Ciclo escolar	2026–2027	
+
+Filtros (Select de nivel: Kinder, Primaria, Secundaria; mas a considerar, un  buscador
+no seria tan necesario porque no se manejaran muchos alumnos)
+
+(informacion)
+Cuota anual por alumno: USD $350
+Los pagos se registran únicamente mediante su fecha.
+El total y el saldo se calculan automáticamente en dólares.
+
+Chips (a considerar)
+INSCRITOS (1.er pago)
+ACTIVOS
+LIQUIDADOS			
+LISTOS PARA ARCHIVO FINAL			
+DEVOLUCIONES PENDIENTES												
+	
+(informacion)											
+CAPTURA: complete las celdas blancas.
+Si dos parcialidades se pagan juntas, registre la misma fecha en ambas columnas.
+Para una baja, seleccione ‘Baja - gestionar devolución’; la fila se marcará en rojo
+y deberá explicarse el caso en Observaciones.																									
+
+Campos del Dashboard
+(se denben separar en diferentes vistas/paneles/secciones a considerar, para manejar los estados de la mejor manera)
+
+Folio, Matricula, Estado (Activo, Baja, Reembolso Realizado), Datos personales: Nombre completo del alumno, Grado, CURP, Fecha de nacimiento, Correo del padre/madre/tutor
+Tipo de incorporació (Nuevo Ingreso, Continuidad), "Fecha pago 1 USD $100", "Fecha pago 2 USD $125", "Fecha pago 3 USD $125", "Total pagado USD", Saldo USD, Estatus de pago, 	
+Fecha correo de bienvenida, Fecha de alta en reporte inicial, Carpeta del alumno creada en Drive (S/N)	
+CURP subida al Drive  (S/N),Boleta(s) subida(s) al Drive (S/N), Expediente documental, Autorización de Control Escolar del nivel  (S/N), Validación para archivo final,
+Fecha de inclusión en archivo final, Devolución solicitada (S/N), Fecha de devolución, Observaciones y seguimiento

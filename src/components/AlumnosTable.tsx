@@ -1,0 +1,762 @@
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from 'react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import {
+  faChevronDown,
+  faChevronRight,
+  faTableColumns,
+} from '@fortawesome/free-solid-svg-icons'
+import { COL_ASSIGN_KEY, COL_GROUPS_KEY, COL_WIDTHS_KEY, formatUsd } from '../lib/constants'
+import { estatusPago, saldo, totalPagado } from '../lib/pagos'
+import {
+  COLUMN_GROUP_BY_ID,
+  COLUMN_GROUPS,
+  DEFAULT_COL_WIDTHS,
+  GROUP_STYLES,
+  STICKY_COLUMN_IDS,
+  TABLE_COLUMNS,
+  type ColumnId,
+  type GroupId,
+} from '../lib/tableColumns'
+import type { Alumno, AlumnoPatch, EstadoAlumno, SN } from '../types/alumno'
+import {
+  ESTADOS,
+  NIVELES,
+  SN_OPTIONS,
+  TIPOS_INCORPORACION,
+} from '../types/alumno'
+import { ColumnAssignModal } from './ColumnAssignModal'
+
+const inputClass =
+  'box-border w-full min-w-0 rounded-md border border-brand-border px-2 py-1.5 text-sm text-ink outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-muted'
+const calcClass =
+  'truncate rounded-md border border-brand-border px-2 py-1.5 text-sm text-ink-muted'
+
+type CollapsedMap = Record<GroupId, boolean>
+
+function loadWidths(): Record<ColumnId, number> {
+  try {
+    const raw = localStorage.getItem(COL_WIDTHS_KEY)
+    if (!raw) return { ...DEFAULT_COL_WIDTHS }
+    return { ...DEFAULT_COL_WIDTHS, ...(JSON.parse(raw) as Record<ColumnId, number>) }
+  } catch {
+    return { ...DEFAULT_COL_WIDTHS }
+  }
+}
+
+function defaultCollapsed(): CollapsedMap {
+  return {
+    identidad: false,
+    personales: false,
+    pagos: false,
+    expediente: false,
+    devoluciones: false,
+  }
+}
+
+function loadCollapsed(): CollapsedMap {
+  try {
+    const raw = localStorage.getItem(COL_GROUPS_KEY)
+    if (!raw) return defaultCollapsed()
+    return { ...defaultCollapsed(), ...(JSON.parse(raw) as CollapsedMap) }
+  } catch {
+    return defaultCollapsed()
+  }
+}
+
+function loadAssignments(): Record<ColumnId, GroupId> {
+  try {
+    const raw = localStorage.getItem(COL_ASSIGN_KEY)
+    if (!raw) return { ...COLUMN_GROUP_BY_ID }
+    return {
+      ...COLUMN_GROUP_BY_ID,
+      ...(JSON.parse(raw) as Record<ColumnId, GroupId>),
+    }
+  } catch {
+    return { ...COLUMN_GROUP_BY_ID }
+  }
+}
+
+function groupOrder(id: GroupId): number {
+  return COLUMN_GROUPS.findIndex((group) => group.id === id)
+}
+
+/** Fondo de CELDA: siempre franja de sección (sin tinte de estado en toda la fila). */
+function cellTone(_estado: EstadoAlumno, groupId: GroupId): string {
+  return GROUP_STYLES[groupId].cell
+}
+
+/**
+ * Inputs de la fila (excepto select Estado).
+ * Baja: solo un borde suave; fondo = celda normal (tone vacío → bg-cell).
+ */
+function rowInputTone(estado: EstadoAlumno): string {
+  if (estado === 'Baja - gestionar devolución') {
+    return 'border-estado-baja-border/50'
+  }
+  if (estado === 'Reembolso Realizado') {
+    return 'border-estado-reembolso-border/40 text-ink-muted'
+  }
+  return ''
+}
+
+/** Select Estado: badge apagado (sin neón) sobre el azul de la tabla. */
+function estadoSelectClass(estado: EstadoAlumno): string {
+  if (estado === 'Baja - gestionar devolución') {
+    return 'border-estado-baja-border bg-estado-baja-input font-semibold text-estado-baja-text'
+  }
+  if (estado === 'Reembolso Realizado') {
+    return 'border-estado-reembolso-border bg-estado-reembolso-input font-medium text-estado-reembolso-text'
+  }
+  return 'border-estado-activo-border bg-estado-activo-input font-semibold text-estado-activo-text'
+}
+
+type CellProps = {
+  value: string
+  onChange: (value: string) => void
+  type?: 'text' | 'email' | 'date'
+  warn?: boolean
+  tone?: string
+}
+
+function CellInput({ value, onChange, type = 'text', warn, tone = '' }: CellProps) {
+  return (
+    <input
+      type={type}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={`${inputClass} ${tone || 'bg-cell'} ${
+        warn && !value.trim() ? 'border-baja-text ring-1 ring-baja-border' : ''
+      }`}
+    />
+  )
+}
+
+function CellSelect({
+  value,
+  options,
+  onChange,
+  className = '',
+  tone = '',
+}: {
+  value: string
+  options: readonly string[]
+  onChange: (value: string) => void
+  className?: string
+  tone?: string
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={`${inputClass} ${className || tone || 'bg-cell'}`}
+    >
+      {options.map((opt) => (
+        <option key={opt} value={opt}>
+          {opt}
+        </option>
+      ))}
+    </select>
+  )
+}
+
+function AlumnoCell({
+  colId,
+  alumno,
+  onChange,
+}: {
+  colId: ColumnId
+  alumno: Alumno
+  onChange: (id: string, patch: AlumnoPatch) => void
+}) {
+  const warnObs =
+    alumno.estado === 'Baja - gestionar devolución' ||
+    alumno.devolucionSolicitada === 'S'
+  const patch = (next: AlumnoPatch) => onChange(alumno.id, next)
+  const tone = rowInputTone(alumno.estado)
+  const calcTone = 'bg-cell-calc'
+
+  switch (colId) {
+    case 'folio':
+      return (
+        <CellInput
+          value={alumno.folio}
+          onChange={(folio) => patch({ folio })}
+          tone={tone}
+        />
+      )
+    case 'matricula':
+      return (
+        <CellInput
+          value={alumno.matricula}
+          onChange={(matricula) => patch({ matricula })}
+          tone={tone}
+        />
+      )
+    case 'estado':
+      return (
+        <CellSelect
+          value={alumno.estado}
+          options={ESTADOS}
+          className={estadoSelectClass(alumno.estado)}
+          onChange={(estado) => patch({ estado: estado as Alumno['estado'] })}
+        />
+      )
+    case 'nivel':
+      return (
+        <CellSelect
+          value={alumno.nivel}
+          options={NIVELES}
+          tone={tone}
+          onChange={(nivel) => patch({ nivel: nivel as Alumno['nivel'] })}
+        />
+      )
+    case 'grado':
+      return (
+        <CellInput
+          value={alumno.grado}
+          onChange={(grado) => patch({ grado })}
+          tone={tone}
+        />
+      )
+    case 'nombre':
+      return (
+        <CellInput
+          value={alumno.nombreCompleto}
+          onChange={(nombreCompleto) => patch({ nombreCompleto })}
+          tone={tone}
+        />
+      )
+    case 'curp':
+      return (
+        <CellInput
+          value={alumno.curp}
+          onChange={(curp) => patch({ curp })}
+          tone={tone}
+        />
+      )
+    case 'nacimiento':
+      return (
+        <CellInput
+          type="date"
+          value={alumno.fechaNacimiento}
+          onChange={(fechaNacimiento) => patch({ fechaNacimiento })}
+          tone={tone}
+        />
+      )
+    case 'correo':
+      return (
+        <CellInput
+          type="email"
+          value={alumno.correoTutor}
+          onChange={(correoTutor) => patch({ correoTutor })}
+          tone={tone}
+        />
+      )
+    case 'incorporacion':
+      return (
+        <CellSelect
+          value={alumno.tipoIncorporacion}
+          options={TIPOS_INCORPORACION}
+          tone={tone}
+          onChange={(tipoIncorporacion) =>
+            patch({
+              tipoIncorporacion: tipoIncorporacion as Alumno['tipoIncorporacion'],
+            })
+          }
+        />
+      )
+    case 'pago1':
+      return (
+        <CellInput
+          type="date"
+          value={alumno.fechaPago1}
+          onChange={(fechaPago1) => patch({ fechaPago1 })}
+          tone={tone}
+        />
+      )
+    case 'pago2':
+      return (
+        <CellInput
+          type="date"
+          value={alumno.fechaPago2}
+          onChange={(fechaPago2) => patch({ fechaPago2 })}
+          tone={tone}
+        />
+      )
+    case 'pago3':
+      return (
+        <CellInput
+          type="date"
+          value={alumno.fechaPago3}
+          onChange={(fechaPago3) => patch({ fechaPago3 })}
+          tone={tone}
+        />
+      )
+    case 'total':
+      return (
+        <div className={`${calcClass} ${calcTone}`}>
+          {formatUsd(totalPagado(alumno))}
+        </div>
+      )
+    case 'saldo':
+      return (
+        <div className={`${calcClass} ${calcTone}`}>
+          {formatUsd(saldo(alumno))}
+        </div>
+      )
+    case 'estatus':
+      return (
+        <div className={`${calcClass} ${calcTone}`}>{estatusPago(alumno)}</div>
+      )
+    case 'bienvenida':
+      return (
+        <CellInput
+          type="date"
+          value={alumno.fechaCorreoBienvenida}
+          onChange={(fechaCorreoBienvenida) => patch({ fechaCorreoBienvenida })}
+          tone={tone}
+        />
+      )
+    case 'alta':
+      return (
+        <CellInput
+          type="date"
+          value={alumno.fechaAltaReporteInicial}
+          onChange={(fechaAltaReporteInicial) =>
+            patch({ fechaAltaReporteInicial })
+          }
+          tone={tone}
+        />
+      )
+    case 'carpeta':
+      return (
+        <CellSelect
+          value={alumno.carpetaDrive}
+          options={SN_OPTIONS}
+          tone={tone}
+          onChange={(carpetaDrive) =>
+            patch({ carpetaDrive: carpetaDrive as SN })
+          }
+        />
+      )
+    case 'curpDrive':
+      return (
+        <CellSelect
+          value={alumno.curpDrive}
+          options={SN_OPTIONS}
+          tone={tone}
+          onChange={(curpDrive) => patch({ curpDrive: curpDrive as SN })}
+        />
+      )
+    case 'boletas':
+      return (
+        <CellSelect
+          value={alumno.boletasDrive}
+          options={SN_OPTIONS}
+          tone={tone}
+          onChange={(boletasDrive) =>
+            patch({ boletasDrive: boletasDrive as SN })
+          }
+        />
+      )
+    case 'expediente':
+      return (
+        <CellInput
+          value={alumno.expedienteDocumental}
+          onChange={(expedienteDocumental) => patch({ expedienteDocumental })}
+          tone={tone}
+        />
+      )
+    case 'autorizacion':
+      return (
+        <CellSelect
+          value={alumno.autorizacionControlEscolar}
+          options={SN_OPTIONS}
+          tone={tone}
+          onChange={(autorizacionControlEscolar) =>
+            patch({
+              autorizacionControlEscolar: autorizacionControlEscolar as SN,
+            })
+          }
+        />
+      )
+    case 'validacion':
+      return (
+        <CellSelect
+          value={alumno.validacionArchivoFinal}
+          options={SN_OPTIONS}
+          tone={tone}
+          onChange={(validacionArchivoFinal) =>
+            patch({ validacionArchivoFinal: validacionArchivoFinal as SN })
+          }
+        />
+      )
+    case 'fechaArchivo':
+      return (
+        <CellInput
+          type="date"
+          value={alumno.fechaInclusionArchivoFinal}
+          onChange={(fechaInclusionArchivoFinal) =>
+            patch({ fechaInclusionArchivoFinal })
+          }
+          tone={tone}
+        />
+      )
+    case 'devolucionSn':
+      return (
+        <CellSelect
+          value={alumno.devolucionSolicitada}
+          options={SN_OPTIONS}
+          tone={tone}
+          onChange={(devolucionSolicitada) =>
+            patch({ devolucionSolicitada: devolucionSolicitada as SN })
+          }
+        />
+      )
+    case 'fechaDevolucion':
+      return (
+        <CellInput
+          type="date"
+          value={alumno.fechaDevolucion}
+          onChange={(fechaDevolucion) => patch({ fechaDevolucion })}
+          tone={tone}
+        />
+      )
+    case 'observaciones':
+      return (
+        <CellInput
+          warn={warnObs}
+          value={alumno.observaciones}
+          onChange={(observaciones) => patch({ observaciones })}
+          tone={tone}
+        />
+      )
+  }
+}
+
+type Props = {
+  alumnos: Alumno[]
+  onChange: (id: string, patch: AlumnoPatch) => void
+}
+
+export function AlumnosTable({ alumnos, onChange }: Props) {
+  const [widths, setWidths] = useState<Record<ColumnId, number>>(loadWidths)
+  const [collapsed, setCollapsed] = useState<CollapsedMap>(loadCollapsed)
+  const [assignments, setAssignments] =
+    useState<Record<ColumnId, GroupId>>(loadAssignments)
+  const [assignOpen, setAssignOpen] = useState(false)
+  const [jumpTo, setJumpTo] = useState<GroupId | null>(null)
+  const colRefs = useRef<Partial<Record<ColumnId, HTMLTableCellElement | null>>>(
+    {},
+  )
+  const scrollRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    localStorage.setItem(COL_WIDTHS_KEY, JSON.stringify(widths))
+  }, [widths])
+
+  useEffect(() => {
+    localStorage.setItem(COL_GROUPS_KEY, JSON.stringify(collapsed))
+  }, [collapsed])
+
+  useEffect(() => {
+    localStorage.setItem(COL_ASSIGN_KEY, JSON.stringify(assignments))
+  }, [assignments])
+
+  const visibleColumns = useMemo(() => {
+    const bySection = TABLE_COLUMNS.filter(
+      (col) => !collapsed[assignments[col.id]],
+    ).sort((a, b) => {
+      const groupDiff =
+        groupOrder(assignments[a.id]) - groupOrder(assignments[b.id])
+      if (groupDiff !== 0) return groupDiff
+      return (
+        TABLE_COLUMNS.findIndex((col) => col.id === a.id) -
+        TABLE_COLUMNS.findIndex((col) => col.id === b.id)
+      )
+    })
+    const sticky = STICKY_COLUMN_IDS.filter((id) =>
+      bySection.some((col) => col.id === id),
+    ).map((id) => TABLE_COLUMNS.find((col) => col.id === id)!)
+    const rest = bySection.filter((col) => !STICKY_COLUMN_IDS.includes(col.id))
+    return [...sticky, ...rest]
+  }, [assignments, collapsed])
+
+  const stickyLeft = useMemo(() => {
+    const lefts: Partial<Record<ColumnId, number>> = {}
+    let acc = 0
+    for (const id of STICKY_COLUMN_IDS) {
+      if (!visibleColumns.some((col) => col.id === id)) continue
+      lefts[id] = acc
+      acc += widths[id]
+    }
+    return lefts
+  }, [visibleColumns, widths])
+
+  /** Ancho total de columnas fijas (folio + nombre).
+   *  STICKY_BAR_FINE_TUNE_PX: ajuste fino del hueco de la barra
+   *  (positivo = más ancho; negativo = menos). Útil si el espaciador
+   *  no alinea perfecto con el borde derecho de "nombre".
+   */
+  /** Ancho fijo (px) del botón chevron en cada sección. */
+  const SECTION_CHEVRON_PX = 34
+  const stickyWidth = useMemo(
+    () =>
+      STICKY_COLUMN_IDS.reduce(
+        (sum, id) =>
+          visibleColumns.some((col) => col.id === id) ? sum + widths[id] : sum,
+          0,
+      ),
+    [visibleColumns, widths],
+  )
+
+  const tableWidth = useMemo(
+    () => visibleColumns.reduce((sum, col) => sum + widths[col.id], 0),
+    [visibleColumns, widths],
+  )
+
+  useEffect(() => {
+    if (!jumpTo) return
+    const scroller = scrollRef.current
+    // Primera columna de la sección que NO sea fija (folio/nombre).
+    const first = visibleColumns.find(
+      (col) =>
+        assignments[col.id] === jumpTo &&
+        !STICKY_COLUMN_IDS.includes(col.id),
+    )
+    const cell = first ? colRefs.current[first.id] : null
+    if (scroller && cell) {
+      /**
+       * Salto horizontal a una sección:
+       * cell.offsetLeft = inicio de la columna en la tabla
+       * stickyWidth     = ancho de folio + nombre (fijas)
+       * STICKY_JUMP_FINE_TUNE_PX = ajuste fino extra (manual)
+       * Resultado: la sección queda justo a la derecha de las fijas.
+       */
+      const STICKY_JUMP_FINE_TUNE_PX = 80
+      const table = cell.closest('table')
+      const cellLeft = table
+        ? cell.offsetLeft
+        : cell.getBoundingClientRect().left -
+          scroller.getBoundingClientRect().left +
+          scroller.scrollLeft
+      scroller.scrollTo({
+        left: Math.max(0, cellLeft - stickyWidth - STICKY_JUMP_FINE_TUNE_PX),
+        behavior: 'smooth',
+      })
+    }
+    setJumpTo(null)
+  }, [jumpTo, assignments, visibleColumns, stickyWidth])
+
+  const startResize = useCallback(
+    (id: ColumnId, event: ReactPointerEvent<HTMLButtonElement>) => {
+      event.preventDefault()
+      event.stopPropagation()
+      const originX = event.clientX
+      const originW = widths[id]
+      const onMove = (ev: PointerEvent) => {
+        setWidths((prev) => ({
+          ...prev,
+          [id]: Math.max(56, originW + ev.clientX - originX),
+        }))
+      }
+      const onUp = () => {
+        window.removeEventListener('pointermove', onMove)
+        window.removeEventListener('pointerup', onUp)
+      }
+      window.addEventListener('pointermove', onMove)
+      window.addEventListener('pointerup', onUp)
+    },
+    [widths],
+  )
+
+  function jumpToGroup(id: GroupId) {
+    if (collapsed[id]) {
+      setCollapsed((prev) => ({ ...prev, [id]: false }))
+    }
+    setJumpTo(id)
+  }
+
+  function toggleGroup(id: GroupId) {
+    setCollapsed((prev) => ({ ...prev, [id]: !prev[id] }))
+  }
+
+  function assignColumn(columnId: ColumnId, groupId: GroupId) {
+    setAssignments((prev) => ({ ...prev, [columnId]: groupId }))
+    setCollapsed((prev) => ({ ...prev, [groupId]: false }))
+  }
+
+  function stickyStyle(colId: ColumnId, isHeader: boolean) {
+    const left = stickyLeft[colId]
+    if (left === undefined) {
+      return isHeader ? { top: 0 } : undefined
+    }
+    return isHeader ? { top: 0, left } : { left }
+  }
+
+  function stickyClass(colId: ColumnId, isHeader: boolean) {
+    if (stickyLeft[colId] === undefined) {
+      return isHeader ? 'sticky top-0 z-20' : ''
+    }
+    return isHeader
+      ? 'sticky z-30 shadow-[2px_0_0_0_var(--color-brand-border)]'
+      : 'sticky-col sticky z-10 shadow-[2px_0_0_0_var(--color-brand-border)]'
+  }
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-brand-border bg-cell shadow-sm">
+      {/*
+        === BARRA DE SECCIONES (arriba de la tabla) ===
+        - Color único: bg-sec-bar (azul más fuerte, ver index.css)
+        - A la izquierda: hueco vacío del ancho de folio + nombre (stickyWidth)
+          → ahí NO va ninguna sección; queda alineado con las columnas fijas
+        - Centro: Identidad | Datos personales | Pagos | … (mismo azul)
+        - Derecha: botón "Columnas"
+        Ajustes manuales:
+        - Color: --color-sec-bar / --color-sec-bar-text en index.css
+        - Ancho del hueco: STICKY_BAR_FINE_TUNE_PX arriba
+        - Tamaño del chevron: SECTION_CHEVRON_PX abajo
+      */}
+      <div className="flex w-full shrink-0 items-stretch border-b border-brand-border bg-sec-bar text-sec-bar-text">
+        {/* Hueco sobre folio + nombre (sin título de sección encima) */}
+        <div
+          className="shrink-0 border-r border-white/15"
+          style={{ width: Math.max(0, stickyWidth) }}
+          aria-hidden
+        />
+
+        {/* Secciones: reparten el resto del ancho; todas el mismo azul */}
+        <div className="flex min-w-0 flex-1 items-stretch">
+          {COLUMN_GROUPS.map((group, index) => {
+            const isCollapsed = collapsed[group.id]
+            return (
+              <div
+                key={group.id}
+                className={`flex min-w-0 flex-1 items-stretch ${
+                  index > 0 ? 'border-l border-white/15' : ''
+                } ${isCollapsed ? 'opacity-60' : ''}`}
+              >
+                {/* Nombre: ocupa todo el espacio restante (atajo / scroll) */}
+                <button
+                  type="button"
+                  onClick={() => jumpToGroup(group.id)}
+                  className="min-w-0 flex-1 truncate px-3 py-2.5 text-left text-xs font-semibold tracking-[0.06em] uppercase hover:bg-white/10"
+                  title={`Ir a ${group.label}`}
+                >
+                  {group.label}
+                </button>
+                {/* Chevron: tamaño fijo pequeño; solo colapsa / despliega */}
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group.id)}
+                  style={{ width: SECTION_CHEVRON_PX }}
+                  className="flex shrink-0 items-center justify-center border-l border-white/15 hover:bg-white/10"
+                  aria-label={
+                    isCollapsed
+                      ? `Mostrar ${group.label}`
+                      : `Ocultar ${group.label}`
+                  }
+                  title={isCollapsed ? 'Desplegar' : 'Colapsar'}
+                >
+                  <FontAwesomeIcon
+                    icon={isCollapsed ? faChevronRight : faChevronDown}
+                    className="text-xs"
+                  />
+                </button>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Botón para reasignar columnas a secciones */}
+        <button
+          type="button"
+          onClick={() => setAssignOpen(true)}
+          className="inline-flex shrink-0 items-center gap-2 border-l border-white/15 bg-sec-bar px-3.5 text-sm font-semibold text-sec-bar-text hover:bg-white/10"
+        >
+          <FontAwesomeIcon icon={faTableColumns} />
+          Columnas
+        </button>
+      </div>
+      {alumnos.length === 0 ? (
+        <div className="flex flex-1 items-center justify-center px-6 text-center text-ink-muted">
+          No hay alumnos en este estado para el nivel seleccionado.
+        </div>
+      ) : visibleColumns.length === 0 ? (
+        <div className="flex flex-1 items-center justify-center px-6 text-center text-ink-muted">
+          Todas las secciones están ocultas. Use el chevron para desplegarlas.
+        </div>
+      ) : (
+        <div
+          ref={scrollRef}
+          className="min-h-0 flex-1 overflow-x-auto overflow-y-auto"
+        >
+          <table
+            className="border-collapse text-left"
+            style={{ width: tableWidth, tableLayout: 'fixed' }}
+          >
+            <colgroup>
+              {visibleColumns.map((col) => (
+                <col key={col.id} style={{ width: widths[col.id] }} />
+              ))}
+            </colgroup>
+            <thead>
+              <tr>
+                {visibleColumns.map((col) => (
+                  <th
+                    key={col.id}
+                    ref={(el) => {
+                      colRefs.current[col.id] = el
+                    }}
+                    style={stickyStyle(col.id, true)}
+                    className={`relative border-b border-brand-border px-2.5 py-1.5  text-left text-xs font-semibold tracking-[0.04em] text-ink uppercase ${GROUP_STYLES[assignments[col.id]].head} ${stickyClass(col.id, true)}`}
+                  >
+                    <span className="pr-2">{col.label}</span>
+                    <button
+                      type="button"
+                      aria-label={`Redimensionar columna ${col.label}`}
+                      onPointerDown={(e) => startResize(col.id, e)}
+                      className="absolute top-0 right-0 h-full w-2 cursor-col-resize hover:bg-brand-accent/40"
+                    />
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {alumnos.map((alumno) => (
+                <tr key={alumno.id}>
+                  {visibleColumns.map((col) => (
+                    <td
+                      key={col.id}
+                      style={stickyStyle(col.id, false)}
+                      className={`px-2 py-1.5 ${cellTone(alumno.estado, assignments[col.id])} ${stickyClass(col.id, false)}`}
+                    >
+                      <AlumnoCell
+                        colId={col.id}
+                        alumno={alumno}
+                        onChange={onChange}
+                      />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <ColumnAssignModal
+        open={assignOpen}
+        assignments={assignments}
+        onAssign={assignColumn}
+        onClose={() => setAssignOpen(false)}
+      />
+    </div>
+  )
+}
