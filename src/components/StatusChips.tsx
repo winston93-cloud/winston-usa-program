@@ -16,12 +16,8 @@ const FILTER_CHIPS: {
 ]
 
 /**
- * Anchos relativos de cada chip (flex-grow).
- * Edita estos números para que una chip ocupe más o menos espacio:
- * - 1 = base
- * - 1.4 = un poco más ancha
- * - 2 = el doble que la base
- * El gap fijo se define abajo en CHIP_GAP_CLASS.
+ * Anchos relativos de cada chip (flex-grow) en desktop.
+ * En móvil los chips hacen scroll horizontal a tamaño natural.
  */
 const CHIP_FLEX_GROW: Record<ChipFiltro, number> = {
   todos: 0.9,
@@ -32,13 +28,8 @@ const CHIP_FLEX_GROW: Record<ChipFiltro, number> = {
   devoluciones: 1.6,
 }
 
-/** Gap horizontal fijo entre chips. Cambia gap-2 / gap-3 / gap-4 según necesites. */
-const CHIP_GAP_CLASS = 'gap-2.5'
+const CHIP_GAP_CLASS = 'gap-2'
 
-/*
-  Colores de chips: usan tokens --color-chip-* de src/index.css
-  (idle = borde suave + texto del color; active = fondo sólido + texto on-brand).
-*/
 const CHIP_STYLE: Record<string, { idle: string; active: string; dot: string }> =
   {
     'chip-todos': {
@@ -82,14 +73,14 @@ type Props = {
 
 export function StatusChips({ chip, onChip, data, showing }: Props) {
   return (
-    <div className="space-y-2.5">
+    <div className="shrink-0 space-y-2">
       {/*
-        Fila de chips a ancho completo:
-        - w-full + flex para repartir todo el ancho disponible
-        - CHIP_GAP_CLASS = separación fija entre chips
-        - CHIP_FLEX_GROW[id] = proporción de ancho de cada chip
+        Móvil: scroll horizontal (chips a tamaño natural).
+        md+: fila a ancho completo con flex-grow proporcional.
       */}
-      <div className={`flex w-full items-stretch ${CHIP_GAP_CLASS}`}>
+      <div
+        className={`-mx-1 flex w-[calc(100%+0.5rem)] items-stretch overflow-x-auto px-1 pb-0.5 md:mx-0 md:w-full md:overflow-visible md:px-0 md:pb-0 ${CHIP_GAP_CLASS}`}
+      >
         {FILTER_CHIPS.map(({ id, key, color }) => {
           const selected = chip === id
           const style = CHIP_STYLE[color]
@@ -100,14 +91,16 @@ export function StatusChips({ chip, onChip, data, showing }: Props) {
               title={CHIP_HINTS[id]}
               onClick={() => onChip(id)}
               style={{ flexGrow: CHIP_FLEX_GROW[id], flexBasis: 0 }}
-              className={`inline-flex min-w-0 items-center justify-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold tracking-wide uppercase ${
+              className={`inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full border px-3 py-2 text-[0.65rem] font-semibold tracking-wide uppercase sm:gap-2 sm:text-xs md:min-w-0 md:shrink ${
                 selected ? style.active : style.idle
               }`}
             >
               <span
                 className={`size-2 shrink-0 rounded-full ${selected ? 'bg-on-brand' : style.dot}`}
               />
-              <span className="truncate">{CHIP_LABELS[id]}</span>
+              <span className="whitespace-nowrap md:truncate">
+                {CHIP_LABELS[id]}
+              </span>
               <span className="shrink-0 rounded-full bg-black/10 px-2 py-0.5 text-[11px] tabular-nums normal-case">
                 {data[key]}
               </span>
@@ -115,9 +108,9 @@ export function StatusChips({ chip, onChip, data, showing }: Props) {
           )
         })}
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-2 text-[0.95rem]">
+      <div className="flex flex-col gap-1 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-2 sm:text-[0.95rem]">
         <p className="text-ink-muted">{showing}</p>
-        <div className="flex flex-wrap items-center gap-5">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <p className="text-ink">
             Recaudado:{' '}
             <span className="font-semibold text-chip-recaudado">
@@ -125,7 +118,7 @@ export function StatusChips({ chip, onChip, data, showing }: Props) {
             </span>
           </p>
           <p className="text-ink">
-            Saldo pendiente:{' '}
+            Saldo:{' '}
             <span className="font-semibold text-chip-saldo">
               {formatUsd(data.saldoPendiente)}
             </span>

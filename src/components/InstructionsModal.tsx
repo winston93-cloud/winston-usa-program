@@ -34,7 +34,7 @@ export function InstructionsModal({ open, onClose, onReset }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="instrucciones-titulo"
-        className="w-full max-w-lg rounded-xl border border-brand-border bg-cell p-6 shadow-xl"
+        className="max-h-[min(90dvh,36rem)] w-full max-w-lg overflow-y-auto rounded-xl border border-brand-border bg-cell p-4 shadow-xl sm:p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-3">
@@ -56,7 +56,12 @@ export function InstructionsModal({ open, onClose, onReset }: Props) {
         </div>
         <ul className="list-disc space-y-2.5 pl-5 text-[0.95rem] leading-relaxed text-ink">
           <li>
-            Complete las celdas blancas. El total y el saldo se calculan
+            Capture el <strong>Ref</strong> (<code>alumno_ref</code> de Winston) y
+            pulse Enter o salga del campo: nombre, nivel, grado, CURP,
+            nacimiento, correo e incorporación se rellenan solos.
+          </li>
+          <li>
+            Complete las celdas blancas restantes. El total y el saldo se calculan
             automáticamente en dólares.
           </li>
           <li>Los pagos se registran únicamente mediante su fecha.</li>
@@ -85,7 +90,7 @@ export function InstructionsModal({ open, onClose, onReset }: Props) {
           className="mt-5 inline-flex items-center gap-2 rounded-lg border border-brand-border px-4 py-2 text-[0.95rem] font-semibold text-brand-on-surface hover:bg-brand-soft"
         >
           <FontAwesomeIcon icon={faRotateLeft} />
-          Restaurar ejemplos
+          Vaciar registros del programa
         </button>
       </div>
     </div>

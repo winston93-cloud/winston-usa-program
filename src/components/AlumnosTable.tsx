@@ -123,14 +123,31 @@ type CellProps = {
   type?: 'text' | 'email' | 'date'
   warn?: boolean
   tone?: string
+  onBlurCommit?: (value: string) => void
+  title?: string
 }
 
-function CellInput({ value, onChange, type = 'text', warn, tone = '' }: CellProps) {
+function CellInput({
+  value,
+  onChange,
+  type = 'text',
+  warn,
+  tone = '',
+  onBlurCommit,
+  title,
+}: CellProps) {
   return (
     <input
       type={type}
       value={value}
+      title={title}
       onChange={(e) => onChange(e.target.value)}
+      onBlur={(e) => onBlurCommit?.(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && onBlurCommit) {
+          ;(e.target as HTMLInputElement).blur()
+        }
+      }}
       className={`${inputClass} ${tone || 'bg-cell'} ${
         warn && !value.trim() ? 'border-baja-text ring-1 ring-baja-border' : ''
       }`}
@@ -170,10 +187,12 @@ function AlumnoCell({
   colId,
   alumno,
   onChange,
+  onAlumnoRef,
 }: {
   colId: ColumnId
   alumno: Alumno
   onChange: (id: string, patch: AlumnoPatch) => void
+  onAlumnoRef?: (id: string, alumnoRef: string) => void
 }) {
   const warnObs =
     alumno.estado === 'Baja - gestionar devolución' ||
@@ -191,12 +210,14 @@ function AlumnoCell({
           tone={tone}
         />
       )
-    case 'matricula':
+    case 'alumnoRef':
       return (
         <CellInput
-          value={alumno.matricula}
-          onChange={(matricula) => patch({ matricula })}
+          value={alumno.alumnoRef}
+          onChange={(alumnoRef) => patch({ alumnoRef })}
+          onBlurCommit={(alumnoRef) => onAlumnoRef?.(alumno.id, alumnoRef)}
           tone={tone}
+          title="Escriba el alumno_ref y pulse Enter o salga del campo para rellenar datos"
         />
       )
     case 'estado':
@@ -444,19 +465,35 @@ function AlumnoCell({
 type Props = {
   alumnos: Alumno[]
   onChange: (id: string, patch: AlumnoPatch) => void
+  onAlumnoRef?: (id: string, alumnoRef: string) => void
 }
 
-export function AlumnosTable({ alumnos, onChange }: Props) {
+export function AlumnosTable({ alumnos, onChange, onAlumnoRef }: Props) {
   const [widths, setWidths] = useState<Record<ColumnId, number>>(loadWidths)
   const [collapsed, setCollapsed] = useState<CollapsedMap>(loadCollapsed)
   const [assignments, setAssignments] =
     useState<Record<ColumnId, GroupId>>(loadAssignments)
   const [assignOpen, setAssignOpen] = useState(false)
   const [jumpTo, setJumpTo] = useState<GroupId | null>(null)
+  /** En pantallas angostas las columnas fijas comen demasiado ancho: se desactivan. */
+  const [stickEnabled, setStickEnabled] = useState(
+    () =>
+      typeof window !== 'undefined'
+        ? window.matchMedia('(min-width: 768px)').matches
+        : true,
+  )
   const colRefs = useRef<Partial<Record<ColumnId, HTMLTableCellElement | null>>>(
     {},
   )
   const scrollRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    const onChangeMq = () => setStickEnabled(mq.matches)
+    onChangeMq()
+    mq.addEventListener('change', onChangeMq)
+    return () => mq.removeEventListener('change', onChangeMq)
+  }, [])
 
   useEffect(() => {
     localStorage.setItem(COL_WIDTHS_KEY, JSON.stringify(widths))
@@ -470,6 +507,11 @@ export function AlumnosTable({ alumnos, onChange }: Props) {
     localStorage.setItem(COL_ASSIGN_KEY, JSON.stringify(assignments))
   }, [assignments])
 
+  const stickyIds = useMemo(
+    () => (stickEnabled ? STICKY_COLUMN_IDS : ([] as ColumnId[])),
+    [stickEnabled],
+  )
+
   const visibleColumns = useMemo(() => {
     const bySection = TABLE_COLUMNS.filter(
       (col) => !collapsed[assignments[col.id]],
@@ -482,23 +524,24 @@ export function AlumnosTable({ alumnos, onChange }: Props) {
         TABLE_COLUMNS.findIndex((col) => col.id === b.id)
       )
     })
-    const sticky = STICKY_COLUMN_IDS.filter((id) =>
-      bySection.some((col) => col.id === id),
-    ).map((id) => TABLE_COLUMNS.find((col) => col.id === id)!)
-    const rest = bySection.filter((col) => !STICKY_COLUMN_IDS.includes(col.id))
+    const sticky = stickyIds
+      .filter((id) => bySection.some((col) => col.id === id))
+      .map((id) => TABLE_COLUMNS.find((col) => col.id === id)!)
+    const rest = bySection.filter((col) => !stickyIds.includes(col.id))
     return [...sticky, ...rest]
-  }, [assignments, collapsed])
+  }, [assignments, collapsed, stickyIds])
 
   const stickyLeft = useMemo(() => {
     const lefts: Partial<Record<ColumnId, number>> = {}
+    if (!stickEnabled) return lefts
     let acc = 0
-    for (const id of STICKY_COLUMN_IDS) {
+    for (const id of stickyIds) {
       if (!visibleColumns.some((col) => col.id === id)) continue
       lefts[id] = acc
       acc += widths[id]
     }
     return lefts
-  }, [visibleColumns, widths])
+  }, [visibleColumns, widths, stickEnabled, stickyIds])
 
   /** Ancho total de columnas fijas (folio + nombre).
    *  STICKY_BAR_FINE_TUNE_PX: ajuste fino del hueco de la barra
@@ -509,12 +552,12 @@ export function AlumnosTable({ alumnos, onChange }: Props) {
   const SECTION_CHEVRON_PX = 34
   const stickyWidth = useMemo(
     () =>
-      STICKY_COLUMN_IDS.reduce(
+      stickyIds.reduce(
         (sum, id) =>
           visibleColumns.some((col) => col.id === id) ? sum + widths[id] : sum,
-          0,
+        0,
       ),
-    [visibleColumns, widths],
+    [visibleColumns, widths, stickyIds],
   )
 
   const tableWidth = useMemo(
@@ -529,7 +572,7 @@ export function AlumnosTable({ alumnos, onChange }: Props) {
     const first = visibleColumns.find(
       (col) =>
         assignments[col.id] === jumpTo &&
-        !STICKY_COLUMN_IDS.includes(col.id),
+        !stickyIds.includes(col.id),
     )
     const cell = first ? colRefs.current[first.id] : null
     if (scroller && cell) {
@@ -540,7 +583,7 @@ export function AlumnosTable({ alumnos, onChange }: Props) {
        * STICKY_JUMP_FINE_TUNE_PX = ajuste fino extra (manual)
        * Resultado: la sección queda justo a la derecha de las fijas.
        */
-      const STICKY_JUMP_FINE_TUNE_PX = 80
+      const STICKY_JUMP_FINE_TUNE_PX = stickEnabled ? 80 : 0
       const table = cell.closest('table')
       const cellLeft = table
         ? cell.offsetLeft
@@ -553,7 +596,7 @@ export function AlumnosTable({ alumnos, onChange }: Props) {
       })
     }
     setJumpTo(null)
-  }, [jumpTo, assignments, visibleColumns, stickyWidth])
+  }, [jumpTo, assignments, visibleColumns, stickyWidth, stickyIds, stickEnabled])
 
   const startResize = useCallback(
     (id: ColumnId, event: ReactPointerEvent<HTMLButtonElement>) => {
@@ -611,48 +654,39 @@ export function AlumnosTable({ alumnos, onChange }: Props) {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-brand-border bg-cell shadow-sm">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-brand-border bg-cell shadow-sm">
       {/*
         === BARRA DE SECCIONES (arriba de la tabla) ===
-        - Color único: bg-sec-bar (azul más fuerte, ver index.css)
-        - A la izquierda: hueco vacío del ancho de folio + nombre (stickyWidth)
-          → ahí NO va ninguna sección; queda alineado con las columnas fijas
-        - Centro: Identidad | Datos personales | Pagos | … (mismo azul)
-        - Derecha: botón "Columnas"
-        Ajustes manuales:
-        - Color: --color-sec-bar / --color-sec-bar-text en index.css
-        - Ancho del hueco: STICKY_BAR_FINE_TUNE_PX arriba
-        - Tamaño del chevron: SECTION_CHEVRON_PX abajo
+        Móvil: scroll horizontal de secciones (tabla completa se mantiene).
+        md+: hueco alineado con columnas sticky + secciones flex.
       */}
       <div className="flex w-full shrink-0 items-stretch border-b border-brand-border bg-sec-bar text-sec-bar-text">
-        {/* Hueco sobre folio + nombre (sin título de sección encima) */}
-        <div
-          className="shrink-0 border-r border-white/15"
-          style={{ width: Math.max(0, stickyWidth) }}
-          aria-hidden
-        />
+        {stickEnabled && stickyWidth > 0 ? (
+          <div
+            className="hidden shrink-0 border-r border-white/15 md:block"
+            style={{ width: Math.max(0, stickyWidth) }}
+            aria-hidden
+          />
+        ) : null}
 
-        {/* Secciones: reparten el resto del ancho; todas el mismo azul */}
-        <div className="flex min-w-0 flex-1 items-stretch">
+        <div className="flex min-w-0 flex-1 items-stretch overflow-x-auto">
           {COLUMN_GROUPS.map((group, index) => {
             const isCollapsed = collapsed[group.id]
             return (
               <div
                 key={group.id}
-                className={`flex min-w-0 flex-1 items-stretch ${
+                className={`flex min-w-[7.5rem] shrink-0 items-stretch sm:min-w-0 sm:flex-1 ${
                   index > 0 ? 'border-l border-white/15' : ''
                 } ${isCollapsed ? 'opacity-60' : ''}`}
               >
-                {/* Nombre: ocupa todo el espacio restante (atajo / scroll) */}
                 <button
                   type="button"
                   onClick={() => jumpToGroup(group.id)}
-                  className="min-w-0 flex-1 truncate px-3 py-2.5 text-left text-xs font-semibold tracking-[0.06em] uppercase hover:bg-white/10"
+                  className="min-w-0 flex-1 truncate px-2.5 py-2 text-left text-[0.65rem] font-semibold tracking-[0.06em] uppercase hover:bg-white/10 sm:px-3 sm:py-2.5 sm:text-xs"
                   title={`Ir a ${group.label}`}
                 >
                   {group.label}
                 </button>
-                {/* Chevron: tamaño fijo pequeño; solo colapsa / despliega */}
                 <button
                   type="button"
                   onClick={() => toggleGroup(group.id)}
@@ -675,16 +709,18 @@ export function AlumnosTable({ alumnos, onChange }: Props) {
           })}
         </div>
 
-        {/* Botón para reasignar columnas a secciones */}
         <button
           type="button"
           onClick={() => setAssignOpen(true)}
-          className="inline-flex shrink-0 items-center gap-2 border-l border-white/15 bg-sec-bar px-3.5 text-sm font-semibold text-sec-bar-text hover:bg-white/10"
+          className="inline-flex shrink-0 items-center gap-1.5 border-l border-white/15 bg-sec-bar px-2.5 text-xs font-semibold text-sec-bar-text hover:bg-white/10 sm:gap-2 sm:px-3.5 sm:text-sm"
         >
           <FontAwesomeIcon icon={faTableColumns} />
-          Columnas
+          <span className="hidden sm:inline">Columnas</span>
         </button>
       </div>
+      <p className="shrink-0 border-b border-brand-border bg-brand-soft/60 px-3 py-1 text-[0.7rem] text-ink-muted md:hidden">
+        Deslice la tabla en horizontal y vertical para ver todas las columnas.
+      </p>
       {alumnos.length === 0 ? (
         <div className="flex flex-1 items-center justify-center px-6 text-center text-ink-muted">
           No hay alumnos en este estado para el nivel seleccionado.
@@ -696,11 +732,11 @@ export function AlumnosTable({ alumnos, onChange }: Props) {
       ) : (
         <div
           ref={scrollRef}
-          className="min-h-0 flex-1 overflow-x-auto overflow-y-auto"
+          className="table-scroll min-h-0 flex-1 overflow-x-auto overflow-y-auto overscroll-contain"
         >
           <table
             className="border-collapse text-left"
-            style={{ width: tableWidth, tableLayout: 'fixed' }}
+            style={{ width: tableWidth, minWidth: tableWidth, tableLayout: 'fixed' }}
           >
             <colgroup>
               {visibleColumns.map((col) => (
@@ -716,14 +752,14 @@ export function AlumnosTable({ alumnos, onChange }: Props) {
                       colRefs.current[col.id] = el
                     }}
                     style={stickyStyle(col.id, true)}
-                    className={`relative border-b border-brand-border px-2.5 py-1.5  text-left text-xs font-semibold tracking-[0.04em] text-ink uppercase ${GROUP_STYLES[assignments[col.id]].head} ${stickyClass(col.id, true)}`}
+                    className={`relative border-b border-brand-border px-2.5 py-1.5 text-left text-xs font-semibold tracking-[0.04em] text-ink uppercase ${GROUP_STYLES[assignments[col.id]].head} ${stickyClass(col.id, true)}`}
                   >
                     <span className="pr-2">{col.label}</span>
                     <button
                       type="button"
                       aria-label={`Redimensionar columna ${col.label}`}
                       onPointerDown={(e) => startResize(col.id, e)}
-                      className="absolute top-0 right-0 h-full w-2 cursor-col-resize hover:bg-brand-accent/40"
+                      className="absolute top-0 right-0 h-full w-2 cursor-col-resize touch-none hover:bg-brand-accent/40"
                     />
                   </th>
                 ))}
@@ -742,6 +778,7 @@ export function AlumnosTable({ alumnos, onChange }: Props) {
                         colId={col.id}
                         alumno={alumno}
                         onChange={onChange}
+                        onAlumnoRef={onAlumnoRef}
                       />
                     </td>
                   ))}
