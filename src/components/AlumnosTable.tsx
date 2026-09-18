@@ -5,14 +5,17 @@ import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
 } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faChevronDown,
   faChevronRight,
+  faFilePdf,
   faTableColumns,
 } from '@fortawesome/free-solid-svg-icons'
 import { COL_ASSIGN_KEY, COL_GROUPS_KEY, COL_WIDTHS_KEY, formatUsd } from '../lib/constants'
+import { generateAndDownloadCarta } from '../lib/generateCartaBienvenida'
 import { estatusPago, saldo, totalPagado } from '../lib/pagos'
 import {
   COLUMN_GROUP_BY_ID,
@@ -24,19 +27,19 @@ import {
   type ColumnId,
   type GroupId,
 } from '../lib/tableColumns'
-import type { Alumno, AlumnoPatch, EstadoAlumno, SN } from '../types/alumno'
 import {
   ESTADOS,
-  NIVELES,
   SN_OPTIONS,
-  TIPOS_INCORPORACION,
+  type Alumno,
+  type AlumnoPatch,
+  type EstadoAlumno,
+  type SN,
 } from '../types/alumno'
 import { ColumnAssignModal } from './ColumnAssignModal'
 
 const inputClass =
-  'box-border w-full min-w-0 rounded-md border border-brand-border px-2 py-1.5 text-sm text-ink outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-muted'
-const calcClass =
-  'truncate rounded-md border border-brand-border px-2 py-1.5 text-sm text-ink-muted'
+  'box-border w-full min-w-0 rounded-md border border-brand-border px-2 py-1.5 text-sm text-ink outline-none focus:ring-1 focus:ring-white'
+const readClass = 'truncate px-0.5 py-1 text-sm text-ink'
 
 type CollapsedMap = Record<GroupId, boolean>
 
@@ -183,43 +186,92 @@ function CellSelect({
   )
 }
 
+function ReadCell({
+  children,
+  title,
+}: {
+  children: ReactNode
+  title?: string
+}) {
+  return (
+    <div className={readClass} title={title}>
+      {children || '—'}
+    </div>
+  )
+}
+
+function BienvenidaCell({
+  alumno,
+  tone,
+  onChange,
+}: {
+  alumno: Alumno
+  tone: string
+  onChange: (value: string) => void
+}) {
+  const [busy, setBusy] = useState(false)
+  const canDownload = Boolean(alumno.nombreCompleto?.trim())
+
+  return (
+    <div className="flex min-w-0 items-center gap-1">
+      <div className="min-w-0 flex-1">
+        <CellInput
+          type="date"
+          value={alumno.fechaCorreoBienvenida}
+          onChange={onChange}
+          tone={tone}
+        />
+      </div>
+      <button
+        type="button"
+        disabled={!canDownload || busy}
+        title={
+          canDownload
+            ? 'Descargar carta de bienvenida (PDF)'
+            : 'Sin nombre de alumno para generar la carta'
+        }
+        aria-label="Descargar carta de bienvenida PDF"
+        onClick={() => {
+          void (async () => {
+            setBusy(true)
+            try {
+              await generateAndDownloadCarta(alumno)
+            } finally {
+              setBusy(false)
+            }
+          })()
+        }}
+        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-brand-border bg-cell text-brand-accent hover:bg-brand-soft disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        <FontAwesomeIcon
+          icon={faFilePdf}
+          className={`text-sm ${busy ? 'animate-pulse' : ''}`}
+        />
+      </button>
+    </div>
+  )
+}
+
 function AlumnoCell({
   colId,
   alumno,
   onChange,
-  onAlumnoRef,
 }: {
   colId: ColumnId
   alumno: Alumno
   onChange: (id: string, patch: AlumnoPatch) => void
-  onAlumnoRef?: (id: string, alumnoRef: string) => void
 }) {
   const warnObs =
     alumno.estado === 'Baja - gestionar devolución' ||
     alumno.devolucionSolicitada === 'S'
   const patch = (next: AlumnoPatch) => onChange(alumno.id, next)
   const tone = rowInputTone(alumno.estado)
-  const calcTone = 'bg-cell-calc'
 
   switch (colId) {
     case 'folio':
-      return (
-        <CellInput
-          value={alumno.folio}
-          onChange={(folio) => patch({ folio })}
-          tone={tone}
-        />
-      )
+      return <ReadCell>{alumno.folio}</ReadCell>
     case 'alumnoRef':
-      return (
-        <CellInput
-          value={alumno.alumnoRef}
-          onChange={(alumnoRef) => patch({ alumnoRef })}
-          onBlurCommit={(alumnoRef) => onAlumnoRef?.(alumno.id, alumnoRef)}
-          tone={tone}
-          title="Escriba el alumno_ref y pulse Enter o salga del campo para rellenar datos"
-        />
-      )
+      return <ReadCell>{alumno.alumnoRef}</ReadCell>
     case 'estado':
       return (
         <CellSelect
@@ -230,119 +282,41 @@ function AlumnoCell({
         />
       )
     case 'nivel':
-      return (
-        <CellSelect
-          value={alumno.nivel}
-          options={NIVELES}
-          tone={tone}
-          onChange={(nivel) => patch({ nivel: nivel as Alumno['nivel'] })}
-        />
-      )
+      return <ReadCell>{alumno.nivel}</ReadCell>
     case 'grado':
-      return (
-        <CellInput
-          value={alumno.grado}
-          onChange={(grado) => patch({ grado })}
-          tone={tone}
-        />
-      )
+      return <ReadCell>{alumno.grado}</ReadCell>
     case 'nombre':
       return (
-        <CellInput
-          value={alumno.nombreCompleto}
-          onChange={(nombreCompleto) => patch({ nombreCompleto })}
-          tone={tone}
-        />
+        <ReadCell title="Desde ficha alumno (alumno_id)">
+          {alumno.nombreCompleto}
+        </ReadCell>
       )
     case 'curp':
-      return (
-        <CellInput
-          value={alumno.curp}
-          onChange={(curp) => patch({ curp })}
-          tone={tone}
-        />
-      )
+      return <ReadCell>{alumno.curp}</ReadCell>
     case 'nacimiento':
-      return (
-        <CellInput
-          type="date"
-          value={alumno.fechaNacimiento}
-          onChange={(fechaNacimiento) => patch({ fechaNacimiento })}
-          tone={tone}
-        />
-      )
+      return <ReadCell>{alumno.fechaNacimiento}</ReadCell>
     case 'correo':
-      return (
-        <CellInput
-          type="email"
-          value={alumno.correoTutor}
-          onChange={(correoTutor) => patch({ correoTutor })}
-          tone={tone}
-        />
-      )
+      return <ReadCell>{alumno.correoTutor}</ReadCell>
     case 'incorporacion':
-      return (
-        <CellSelect
-          value={alumno.tipoIncorporacion}
-          options={TIPOS_INCORPORACION}
-          tone={tone}
-          onChange={(tipoIncorporacion) =>
-            patch({
-              tipoIncorporacion: tipoIncorporacion as Alumno['tipoIncorporacion'],
-            })
-          }
-        />
-      )
+      return <ReadCell>{alumno.tipoIncorporacion}</ReadCell>
     case 'pago1':
-      return (
-        <CellInput
-          type="date"
-          value={alumno.fechaPago1}
-          onChange={(fechaPago1) => patch({ fechaPago1 })}
-          tone={tone}
-        />
-      )
+      return <ReadCell>{alumno.fechaPago1}</ReadCell>
     case 'pago2':
-      return (
-        <CellInput
-          type="date"
-          value={alumno.fechaPago2}
-          onChange={(fechaPago2) => patch({ fechaPago2 })}
-          tone={tone}
-        />
-      )
+      return <ReadCell>{alumno.fechaPago2}</ReadCell>
     case 'pago3':
-      return (
-        <CellInput
-          type="date"
-          value={alumno.fechaPago3}
-          onChange={(fechaPago3) => patch({ fechaPago3 })}
-          tone={tone}
-        />
-      )
+      return <ReadCell>{alumno.fechaPago3}</ReadCell>
     case 'total':
-      return (
-        <div className={`${calcClass} ${calcTone}`}>
-          {formatUsd(totalPagado(alumno))}
-        </div>
-      )
+      return <ReadCell>{formatUsd(totalPagado(alumno))}</ReadCell>
     case 'saldo':
-      return (
-        <div className={`${calcClass} ${calcTone}`}>
-          {formatUsd(saldo(alumno))}
-        </div>
-      )
+      return <ReadCell>{formatUsd(saldo(alumno))}</ReadCell>
     case 'estatus':
-      return (
-        <div className={`${calcClass} ${calcTone}`}>{estatusPago(alumno)}</div>
-      )
+      return <ReadCell>{estatusPago(alumno)}</ReadCell>
     case 'bienvenida':
       return (
-        <CellInput
-          type="date"
-          value={alumno.fechaCorreoBienvenida}
-          onChange={(fechaCorreoBienvenida) => patch({ fechaCorreoBienvenida })}
+        <BienvenidaCell
+          alumno={alumno}
           tone={tone}
+          onChange={(fechaCorreoBienvenida) => patch({ fechaCorreoBienvenida })}
         />
       )
     case 'alta':
@@ -465,10 +439,9 @@ function AlumnoCell({
 type Props = {
   alumnos: Alumno[]
   onChange: (id: string, patch: AlumnoPatch) => void
-  onAlumnoRef?: (id: string, alumnoRef: string) => void
 }
 
-export function AlumnosTable({ alumnos, onChange, onAlumnoRef }: Props) {
+export function AlumnosTable({ alumnos, onChange }: Props) {
   const [widths, setWidths] = useState<Record<ColumnId, number>>(loadWidths)
   const [collapsed, setCollapsed] = useState<CollapsedMap>(loadCollapsed)
   const [assignments, setAssignments] =
@@ -583,7 +556,7 @@ export function AlumnosTable({ alumnos, onChange, onAlumnoRef }: Props) {
        * STICKY_JUMP_FINE_TUNE_PX = ajuste fino extra (manual)
        * Resultado: la sección queda justo a la derecha de las fijas.
        */
-      const STICKY_JUMP_FINE_TUNE_PX = stickEnabled ? 80 : 0
+      const STICKY_JUMP_FINE_TUNE_PX = stickEnabled ? 40 : 0
       const table = cell.closest('table')
       const cellLeft = table
         ? cell.offsetLeft
@@ -767,18 +740,17 @@ export function AlumnosTable({ alumnos, onChange, onAlumnoRef }: Props) {
             </thead>
             <tbody>
               {alumnos.map((alumno) => (
-                <tr key={alumno.id}>
+                <tr key={alumno.id} className="border-b border-brand-border">
                   {visibleColumns.map((col) => (
                     <td
                       key={col.id}
                       style={stickyStyle(col.id, false)}
-                      className={`px-2 py-1.5 ${cellTone(alumno.estado, assignments[col.id])} ${stickyClass(col.id, false)}`}
+                      className={`border-b border-brand-border px-2 py-1.5 ${cellTone(alumno.estado, assignments[col.id])} ${stickyClass(col.id, false)}`}
                     >
                       <AlumnoCell
                         colId={col.id}
                         alumno={alumno}
                         onChange={onChange}
-                        onAlumnoRef={onAlumnoRef}
                       />
                     </td>
                   ))}

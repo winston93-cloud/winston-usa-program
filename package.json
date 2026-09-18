@@ -7,14 +7,17 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "cartas": "tsx scripts/generate-cartas.ts"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.3.1",
     "@fortawesome/free-solid-svg-icons": "^7.3.1",
     "@fortawesome/react-fontawesome": "^3.5.0",
     "@insforge/sdk": "^1.5.2",
+    "@pdf-lib/fontkit": "^1.1.1",
     "@tailwindcss/vite": "^4.3.3",
+    "pdf-lib": "^1.17.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "tailwindcss": "^4.3.3"
@@ -25,6 +28,7 @@
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
     "oxlint": "^1.81.0",
+    "tsx": "^4.23.13",
     "typescript": "~6.0.2",
     "vite": "^8.3.0"
   }

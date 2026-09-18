@@ -16,7 +16,6 @@ export function Dashboard() {
     error,
     clearError,
     updateAlumno,
-    applyAlumnoRef,
     syncFromPagos,
     resetSeed,
   } = useAlumnos()
@@ -54,10 +53,31 @@ export function Dashboard() {
               'success',
             )
             setChip('todos')
+            if (result.nuevos.length > 0) {
+              try {
+                const { generateAndDownloadCartas } = await import(
+                  '../lib/generateCartaBienvenida'
+                )
+                const files = await generateAndDownloadCartas(result.nuevos)
+                if (files.length > 0) {
+                  pushToast(
+                    `Cartas de bienvenida generadas: ${files.length} (descarga local; sin correo).`,
+                    'success',
+                  )
+                }
+              } catch (e) {
+                pushToast(
+                  e instanceof Error
+                    ? e.message
+                    : 'No se pudieron generar las cartas PDF',
+                  'error',
+                )
+              }
+            }
           })()
         }}
       />
-      <main className="mx-auto max-w-[1500px] flex min-h-0 w-full flex-1 flex-col gap-2 px-2 py-2 sm:gap-2.5 sm:px-3 sm:py-3 md:px-4 md:py-4 lg:px-5">
+      <main className="mx-auto max-w-[1400px] flex min-h-0 w-full flex-1 flex-col gap-2 px-2 py-2 sm:gap-2.5 sm:px-3 sm:py-3 md:px-4 md:py-4 lg:px-5">
         <StatusChips
           chip={chip}
           onChip={setChip}
@@ -68,13 +88,7 @@ export function Dashboard() {
               : `Mostrando ${visible.length} de ${counts.todos} ${counts.todos === 1 ? 'alumno' : 'alumnos'}`
           }
         />
-        <AlumnosTable
-          alumnos={visible}
-          onChange={updateAlumno}
-          onAlumnoRef={(id, alumnoRef) => {
-            void applyAlumnoRef(id, alumnoRef)
-          }}
-        />
+        <AlumnosTable alumnos={visible} onChange={updateAlumno} />
       </main>
       <InstructionsModal
         open={infoOpen}

@@ -53,7 +53,7 @@ export const TABLE_COLUMNS: TableColumn[] = [
   { id: 'total', label: 'Total pagado', width: 132 },
   { id: 'saldo', label: 'Saldo', width: 124 },
   { id: 'estatus', label: 'Estatus pago', width: 148 },
-  { id: 'bienvenida', label: 'Correo bienvenida', width: 156 },
+  { id: 'bienvenida', label: 'Correo bienvenida', width: 188 },
   { id: 'alta', label: 'Alta reporte inicial', width: 156 },
   { id: 'carpeta', label: 'Carpeta Drive', width: 104 },
   { id: 'curpDrive', label: 'CURP Drive', width: 104 },

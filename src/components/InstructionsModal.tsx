@@ -56,9 +56,9 @@ export function InstructionsModal({ open, onClose, onReset }: Props) {
         </div>
         <ul className="list-disc space-y-2.5 pl-5 text-[0.95rem] leading-relaxed text-ink">
           <li>
-            Capture el <strong>Ref</strong> (<code>alumno_ref</code> de Winston) y
-            pulse Enter o salga del campo: nombre, nivel, grado, CURP,
-            nacimiento, correo e incorporación se rellenan solos.
+            Capture el <strong>Ref</strong> (<code>alumno_ref</code>) para enlazar
+            <code>alumno_id</code>: nombre, nivel, grado, CURP, etc. se leen en vivo
+            desde la ficha Winston (no se editan aquí).
           </li>
           <li>
             Complete las celdas blancas restantes. El total y el saldo se calculan

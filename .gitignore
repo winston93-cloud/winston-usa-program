@@ -44,3 +44,6 @@ dist-ssr
 .vercel
 .env*
 !.env.example
+
+# Cartas PDF generadas (prueba local)
+cartas-bienvenida/

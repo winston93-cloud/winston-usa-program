@@ -30,11 +30,12 @@ export type ChipFiltro =
 
 export type Alumno = {
   id: string
+  /** FK public.alumno.alumno_id — identidad se lee siempre desde ahí */
+  alumnoId: number | null
   folio: string
-  /** alumno_ref de Winston (lo que se captura para autollenar) */
+  /** alumno_ref Winston (atajo; fuente de verdad en public.alumno) */
   alumnoRef: string
-  /** alumno_clave (matrícula), se rellena al buscar por ref */
-  matricula: string
+  /** Desde public.alumno (en vivo vía usa_programa_list) */
   nivel: Nivel
   estado: EstadoAlumno
   nombreCompleto: string
@@ -60,4 +61,5 @@ export type Alumno = {
   observaciones: string
 }
 
-export type AlumnoPatch = Partial<Omit<Alumno, 'id'>>
+/** Parches de UI; identidad solo se refleja en memoria tras lookup/list. */
+export type AlumnoPatch = Partial<Omit<Alumno, 'id' | 'alumnoId'>>

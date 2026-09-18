@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react'
 import {
-  lookupToPatch,
+  lookupToLink,
   patchToRow,
   rowToAlumno,
   type AlumnoLookup,
@@ -22,6 +22,8 @@ export type SyncPagosResult = {
   inserted: number
   updated: number
   alumnos: number
+  /** Filas nuevas tras el sync (para carta de bienvenida, etc.). */
+  nuevos: Alumno[]
 }
 
 const TABLE = 'usa_programa_alumno'
@@ -33,9 +35,8 @@ type StoreValue = {
   error: string | null
   clearError: () => void
   updateAlumno: (id: string, patch: AlumnoPatch) => void
-  /** Busca en Winston por alumno_ref y rellena identidad. */
+  /** Enlaza alumno_id por alumno_ref; identidad se lee de public.alumno. */
   applyAlumnoRef: (id: string, alumnoRef: string) => Promise<void>
-  /** Carga pagadores 23/24/25 del ciclo desde pago_detalle. */
   syncFromPagos: () => Promise<SyncPagosResult | null>
   resetSeed: () => void
 }
@@ -56,11 +57,7 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
       return
     }
     setLoading(true)
-    const { data, error: err } = await insforge.database
-      .from(TABLE)
-      .select()
-      .order('folio', { ascending: true })
-      .limit(500)
+    const { data, error: err } = await insforge.database.rpc('usa_programa_list')
 
     if (err) {
       setError(err.message ?? 'Error al cargar registros del programa')
@@ -83,10 +80,12 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
       setAlumnos((prev) =>
         prev.map((a) => (a.id === id ? { ...a, ...patch } : a)),
       )
+      const rowPatch = patchToRow(patch)
+      if (Object.keys(rowPatch).length === 0) return
       void (async () => {
         const { error: err } = await insforge.database
           .from(TABLE)
-          .update(patchToRow(patch))
+          .update(rowPatch)
           .eq('id', id)
         if (err) {
           setError(err.message ?? 'Error al guardar')
@@ -127,22 +126,25 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
       }
 
       setError(null)
-      const { alumnoId, patch } = lookupToPatch(hit)
+      const { alumnoId, alumnoRef: ref, patch } = lookupToLink(hit)
       setAlumnos((prev) =>
-        prev.map((a) => (a.id === id ? { ...a, ...patch } : a)),
+        prev.map((a) =>
+          a.id === id ? { ...a, ...patch, alumnoId, alumnoRef: String(ref) } : a,
+        ),
       )
       const { error: upErr } = await insforge.database
         .from(TABLE)
         .update({
-          ...patchToRow(patch),
           alumno_id: alumnoId,
-          alumno_ref: hit.alumno_ref,
+          alumno_ref: ref,
         })
         .eq('id', id)
       if (upErr) {
-        setError(upErr.message ?? 'Error al guardar datos del alumno')
+        setError(upErr.message ?? 'Error al enlazar alumno')
         await refresh()
+        return
       }
+      await refresh()
     },
     [refresh, updateAlumno],
   )
@@ -153,6 +155,7 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
       return null
     }
     setSyncing(true)
+    const beforeIds = new Set(alumnos.map((a) => a.id))
     const { data, error: err } = await insforge.database.rpc(
       'usa_sync_pagos_programa',
       { p_ciclo: CICLO_NUMERO },
@@ -162,13 +165,31 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
       setSyncing(false)
       return null
     }
-    const rows = (data ?? []) as SyncPagosResult[]
-    const result = Array.isArray(rows) ? rows[0] : (data as SyncPagosResult)
+    const rows = (data ?? []) as Omit<SyncPagosResult, 'nuevos'>[]
+    const result = Array.isArray(rows)
+      ? rows[0]
+      : (data as Omit<SyncPagosResult, 'nuevos'>)
+
+    const { data: listData, error: listErr } = await insforge.database.rpc(
+      'usa_programa_list',
+    )
+    if (listErr) {
+      setError(listErr.message ?? 'Error al recargar tras sincronizar')
+      setSyncing(false)
+      return null
+    }
+    const list = ((listData ?? []) as AlumnoRow[]).map(rowToAlumno)
+    setAlumnos(list)
     setError(null)
-    await refresh()
     setSyncing(false)
-    return result ?? null
-  }, [refresh])
+    const nuevos = list.filter((a) => !beforeIds.has(a.id))
+    return {
+      inserted: result?.inserted ?? 0,
+      updated: result?.updated ?? 0,
+      alumnos: result?.alumnos ?? list.length,
+      nuevos,
+    }
+  }, [alumnos])
 
   const resetSeed = useCallback(() => {
     void (async () => {
