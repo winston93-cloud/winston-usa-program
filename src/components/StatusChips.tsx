@@ -33,32 +33,32 @@ const CHIP_GAP_CLASS = 'gap-2'
 const CHIP_STYLE: Record<string, { idle: string; active: string; dot: string }> =
   {
     'chip-todos': {
-      idle: 'border-chip-todos/30 bg-cell text-chip-todos',
-      active: 'border-chip-todos bg-chip-todos text-on-brand',
-      dot: 'bg-chip-todos',
+      idle: 'border-chip-base/20 bg-chip-base/50 text-white/75',
+      active: 'border-chip-base bg-chip-base text-on-brand',
+      dot: 'bg-chip-base',
     },
     'chip-inscritos': {
-      idle: 'border-chip-inscritos/30 bg-cell text-chip-inscritos',
-      active: 'border-chip-inscritos bg-chip-inscritos text-on-brand',
-      dot: 'bg-chip-inscritos',
+      idle: 'border-chip-base/20 bg-chip-base/50 text-white/75',
+      active: 'border-chip-base bg-chip-base text-on-brand',
+      dot: 'bg-chip-base',
     },
     'chip-activos': {
-      idle: 'border-chip-activos/30 bg-cell text-chip-activos',
+      idle: 'border-chip-base/20 bg-chip-base/50 text-text-activos',
       active: 'border-chip-activos bg-chip-activos text-on-brand',
       dot: 'bg-chip-activos',
     },
     'chip-liquidados': {
-      idle: 'border-chip-liquidados/30 bg-cell text-chip-liquidados',
-      active: 'border-chip-liquidados bg-chip-liquidados text-on-brand',
-      dot: 'bg-chip-liquidados',
+      idle: 'border-chip-base/20 bg-chip-base/50 text-text-activos',
+      active: 'border-chip-activos bg-chip-activos text-on-brand',
+      dot: 'bg-chip-activos',
     },
     'chip-archivo': {
-      idle: 'border-chip-archivo/30 bg-cell text-chip-archivo',
-      active: 'border-chip-archivo bg-chip-archivo text-on-brand',
-      dot: 'bg-chip-archivo',
+      idle: 'border-chip-base/20 bg-chip-base/50 text-white/75',
+      active: 'border-chip-base bg-chip-base text-on-brand',
+      dot: 'bg-chip-base',
     },
     'chip-devoluciones': {
-      idle: 'border-chip-devoluciones/30 bg-cell text-chip-devoluciones',
+      idle: 'border-chip-base/20 bg-chip-base/50 text-text-devoluciones',
       active: 'border-chip-devoluciones bg-chip-devoluciones text-on-brand',
       dot: 'bg-chip-devoluciones',
     },
@@ -79,7 +79,7 @@ export function StatusChips({ chip, onChip, data, showing }: Props) {
         md+: fila a ancho completo con flex-grow proporcional.
       */}
       <div
-        className={`-mx-1 flex w-[calc(100%+0.5rem)] items-stretch overflow-x-auto px-1 pb-0.5 md:mx-0 md:w-full md:overflow-visible md:px-0 md:pb-0 ${CHIP_GAP_CLASS}`}
+        className={`mt-2 -mx-1 flex w-[calc(100%+0.5rem)] items-stretch overflow-x-auto px-1 pb-0.5 md:mx-0 md:w-full md:overflow-visible md:px-0 md:pb-0 ${CHIP_GAP_CLASS}`}
       >
         {FILTER_CHIPS.map(({ id, key, color }) => {
           const selected = chip === id
@@ -95,9 +95,9 @@ export function StatusChips({ chip, onChip, data, showing }: Props) {
                 selected ? style.active : style.idle
               }`}
             >
-              <span
+              {/* <span
                 className={`size-2 shrink-0 rounded-full ${selected ? 'bg-on-brand' : style.dot}`}
-              />
+              /> */}
               <span className="whitespace-nowrap md:truncate">
                 {CHIP_LABELS[id]}
               </span>

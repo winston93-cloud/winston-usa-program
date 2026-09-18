@@ -8,7 +8,6 @@ import {
   type ReactNode,
 } from 'react'
 import {
-  alumnoToRow,
   lookupToPatch,
   patchToRow,
   rowToAlumno,
@@ -27,58 +26,17 @@ export type SyncPagosResult = {
 
 const TABLE = 'usa_programa_alumno'
 
-function nextFolio(alumnos: Alumno[]): string {
-  const nums = alumnos.map((a) => {
-    const match = a.folio.match(/(\d+)$/)
-    return match ? Number(match[1]) : 0
-  })
-  const next = Math.max(0, ...nums) + 1
-  return `A-${String(next).padStart(3, '0')}`
-}
-
-function blankAlumno(folio: string): Alumno {
-  return {
-    id: crypto.randomUUID(),
-    folio,
-    alumnoRef: '',
-    matricula: '',
-    nivel: 'Primaria',
-    estado: 'Activo',
-    nombreCompleto: '',
-    grado: '',
-    curp: '',
-    fechaNacimiento: '',
-    correoTutor: '',
-    tipoIncorporacion: 'Nuevo Ingreso',
-    fechaPago1: '',
-    fechaPago2: '',
-    fechaPago3: '',
-    fechaCorreoBienvenida: '',
-    fechaAltaReporteInicial: '',
-    carpetaDrive: 'N',
-    curpDrive: 'N',
-    boletasDrive: 'N',
-    expedienteDocumental: '',
-    autorizacionControlEscolar: 'N',
-    validacionArchivoFinal: 'N',
-    fechaInclusionArchivoFinal: '',
-    devolucionSolicitada: 'N',
-    fechaDevolucion: '',
-    observaciones: '',
-  }
-}
-
 type StoreValue = {
   alumnos: Alumno[]
   loading: boolean
   syncing: boolean
   error: string | null
+  clearError: () => void
   updateAlumno: (id: string, patch: AlumnoPatch) => void
   /** Busca en Winston por alumno_ref y rellena identidad. */
   applyAlumnoRef: (id: string, alumnoRef: string) => Promise<void>
   /** Carga pagadores 23/24/25 del ciclo desde pago_detalle. */
   syncFromPagos: () => Promise<SyncPagosResult | null>
-  addAlumno: () => void
   resetSeed: () => void
 }
 
@@ -117,6 +75,8 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void refresh()
   }, [refresh])
+
+  const clearError = useCallback(() => setError(null), [])
 
   const updateAlumno = useCallback(
     (id: string, patch: AlumnoPatch) => {
@@ -210,29 +170,6 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
     return result ?? null
   }, [refresh])
 
-  const addAlumno = useCallback(() => {
-    const created = blankAlumno(nextFolio(alumnos))
-    setAlumnos((prev) => [...prev, created])
-    void (async () => {
-      const { data, error: err } = await insforge.database
-        .from(TABLE)
-        .insert([alumnoToRow(created)])
-        .select()
-      if (err) {
-        setError(err.message ?? 'Error al agregar')
-        await refresh()
-        return
-      }
-      const rows = (data ?? []) as AlumnoRow[]
-      if (rows[0]) {
-        const mapped = rowToAlumno(rows[0])
-        setAlumnos((prev) =>
-          prev.map((a) => (a.id === created.id ? mapped : a)),
-        )
-      }
-    })()
-  }, [alumnos, refresh])
-
   const resetSeed = useCallback(() => {
     void (async () => {
       setLoading(true)
@@ -256,10 +193,10 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
       loading,
       syncing,
       error,
+      clearError,
       updateAlumno,
       applyAlumnoRef,
       syncFromPagos,
-      addAlumno,
       resetSeed,
     }),
     [
@@ -267,10 +204,10 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
       loading,
       syncing,
       error,
+      clearError,
       updateAlumno,
       applyAlumnoRef,
       syncFromPagos,
-      addAlumno,
       resetSeed,
     ],
   )
