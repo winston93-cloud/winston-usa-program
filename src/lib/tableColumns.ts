@@ -18,7 +18,6 @@ export type ColumnId =
   | 'saldo'
   | 'estatus'
   | 'bienvenida'
-  | 'alta'
   | 'carpeta'
   | 'curpDrive'
   | 'boletas'
@@ -41,7 +40,7 @@ export const TABLE_COLUMNS: TableColumn[] = [
   { id: 'alumnoRef', label: 'Ref', width: 110 },
   { id: 'estado', label: 'Estado', width: 210 },
   { id: 'nivel', label: 'Nivel', width: 124 },
-  { id: 'grado', label: 'Grado', width: 90 },
+  { id: 'grado', label: 'Grado', width: 70 },
   { id: 'nombre', label: 'Nombre completo', width: 230 },
   { id: 'curp', label: 'CURP', width: 200 },
   { id: 'nacimiento', label: 'Nacimiento', width: 148 },
@@ -54,11 +53,10 @@ export const TABLE_COLUMNS: TableColumn[] = [
   { id: 'saldo', label: 'Saldo', width: 124 },
   { id: 'estatus', label: 'Estatus pago', width: 148 },
   { id: 'bienvenida', label: 'Correo bienvenida', width: 188 },
-  { id: 'alta', label: 'Alta reporte inicial', width: 156 },
   { id: 'carpeta', label: 'Carpeta Drive', width: 104 },
   { id: 'curpDrive', label: 'CURP Drive', width: 104 },
   { id: 'boletas', label: 'Boletas Drive', width: 104 },
-  { id: 'expediente', label: 'Expediente documental', width: 180 },
+  { id: 'expediente', label: 'Expediente documental', width: 150 },
   { id: 'autorizacion', label: 'Autorización Control Escolar', width: 136 },
   { id: 'validacion', label: 'Validación archivo final', width: 136 },
   { id: 'fechaArchivo', label: 'Fecha archivo final', width: 156 },
@@ -105,7 +103,6 @@ export const COLUMN_GROUPS: ColumnGroup[] = [
     label: 'Expediente',
     columnIds: [
       'bienvenida',
-      'alta',
       'carpeta',
       'curpDrive',
       'boletas',

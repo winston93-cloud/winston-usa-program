@@ -29,7 +29,7 @@ export const CHIP_HINTS = {
   inscritos: 'Alumnos con fecha en el primer pago (USD $100).',
   activos: 'Estado Activo: captura de pagos y expediente en curso.',
   liquidados: 'Cuota anual cubierta (USD $350) y aún activos.',
-  archivo: 'Liquidados con validación para archivo final.',
+  archivo: 'Liquidados con Carpeta Drive y CURP Drive en Si.',
   devoluciones: 'Baja o devolución solicitada, sin reembolso cerrado.',
 } as const
 

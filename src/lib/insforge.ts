@@ -10,6 +10,8 @@ if (!baseUrl || !anonKey) {
 export const insforge = createClient({
   baseUrl: baseUrl ?? '',
   anonKey: anonKey ?? '',
+  // Intercambia ?insforge_code=… tras OAuth Google automáticamente
+  auth: { detectOAuthCallback: true },
 })
 
 export const isInsforgeConfigured = Boolean(baseUrl && anonKey)

@@ -16,7 +16,13 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { COL_ASSIGN_KEY, COL_GROUPS_KEY, COL_WIDTHS_KEY, formatUsd } from '../lib/constants'
 import { generateAndDownloadCarta } from '../lib/generateCartaBienvenida'
-import { estatusPago, saldo, totalPagado } from '../lib/pagos'
+import {
+  etiquetaExpediente,
+  estatusPago,
+  isSi,
+  saldo,
+  totalPagado,
+} from '../lib/pagos'
 import {
   COLUMN_GROUP_BY_ID,
   COLUMN_GROUPS,
@@ -40,6 +46,9 @@ import { ColumnAssignModal } from './ColumnAssignModal'
 const inputClass =
   'box-border w-full min-w-0 rounded-md border border-brand-border px-2 py-1.5 text-sm text-ink outline-none focus:ring-1 focus:ring-white'
 const readClass = 'truncate px-0.5 py-1 text-sm text-ink'
+/** Contenedor tipo “Cuota anual”: píldora semi-transparente. */
+const badgeClass =
+  'inline-flex max-w-full truncate rounded-full bg-brand/10 px-2.5 py-1 text-sm text-ink'
 
 type CollapsedMap = Record<GroupId, boolean>
 
@@ -47,7 +56,12 @@ function loadWidths(): Record<ColumnId, number> {
   try {
     const raw = localStorage.getItem(COL_WIDTHS_KEY)
     if (!raw) return { ...DEFAULT_COL_WIDTHS }
-    return { ...DEFAULT_COL_WIDTHS, ...(JSON.parse(raw) as Record<ColumnId, number>) }
+    const parsed = JSON.parse(raw) as Record<string, number>
+    const next = { ...DEFAULT_COL_WIDTHS }
+    for (const col of TABLE_COLUMNS) {
+      if (typeof parsed[col.id] === 'number') next[col.id] = parsed[col.id]
+    }
+    return next
   } catch {
     return { ...DEFAULT_COL_WIDTHS }
   }
@@ -77,10 +91,12 @@ function loadAssignments(): Record<ColumnId, GroupId> {
   try {
     const raw = localStorage.getItem(COL_ASSIGN_KEY)
     if (!raw) return { ...COLUMN_GROUP_BY_ID }
-    return {
-      ...COLUMN_GROUP_BY_ID,
-      ...(JSON.parse(raw) as Record<ColumnId, GroupId>),
+    const parsed = JSON.parse(raw) as Record<string, GroupId>
+    const next = { ...COLUMN_GROUP_BY_ID }
+    for (const col of TABLE_COLUMNS) {
+      if (parsed[col.id]) next[col.id] = parsed[col.id]
     }
+    return next
   } catch {
     return { ...COLUMN_GROUP_BY_ID }
   }
@@ -200,6 +216,25 @@ function ReadCell({
   )
 }
 
+function BadgeCell({
+  children,
+  title,
+  tone = 'bg-white/10 text-ink',
+}: {
+  children: ReactNode
+  title?: string
+  tone?: string
+}) {
+  const text = children == null || children === '' ? '—' : children
+  return (
+    <div className="flex min-w-0 items-center">
+      <span className={`${badgeClass} ${tone}`} title={title}>
+        {text}
+      </span>
+    </div>
+  )
+}
+
 function BienvenidaCell({
   alumno,
   tone,
@@ -256,16 +291,92 @@ function AlumnoCell({
   colId,
   alumno,
   onChange,
+  editable,
 }: {
   colId: ColumnId
   alumno: Alumno
   onChange: (id: string, patch: AlumnoPatch) => void
+  editable: boolean
 }) {
   const warnObs =
     alumno.estado === 'Baja - gestionar devolución' ||
-    alumno.devolucionSolicitada === 'S'
-  const patch = (next: AlumnoPatch) => onChange(alumno.id, next)
+    isSi(alumno.devolucionSolicitada)
+  const patch = (next: AlumnoPatch) => {
+    if (!editable) return
+    onChange(alumno.id, next)
+  }
   const tone = rowInputTone(alumno.estado)
+
+  const patchDrive = (
+    key: 'carpetaDrive' | 'curpDrive' | 'boletasDrive',
+    value: SN,
+  ) => {
+    const next = { ...alumno, [key]: value }
+    patch({
+      [key]: value,
+      expedienteDocumental: etiquetaExpediente(next),
+    })
+  }
+
+  if (!editable) {
+    // Solo lectura: mismos valores sin inputs
+    switch (colId) {
+      case 'folio':
+        return <ReadCell>{alumno.folio}</ReadCell>
+      case 'alumnoRef':
+        return <ReadCell>{alumno.alumnoRef}</ReadCell>
+      case 'estado':
+        return <BadgeCell>{alumno.estado}</BadgeCell>
+      case 'nivel':
+        return <BadgeCell>{alumno.nivel}</BadgeCell>
+      case 'grado':
+        return <ReadCell>{alumno.grado}</ReadCell>
+      case 'nombre':
+        return <ReadCell>{alumno.nombreCompleto}</ReadCell>
+      case 'curp':
+        return <ReadCell>{alumno.curp}</ReadCell>
+      case 'nacimiento':
+        return <ReadCell>{alumno.fechaNacimiento}</ReadCell>
+      case 'correo':
+        return <ReadCell>{alumno.correoTutor}</ReadCell>
+      case 'incorporacion':
+        return <BadgeCell>{alumno.tipoIncorporacion}</BadgeCell>
+      case 'pago1':
+        return <ReadCell>{alumno.fechaPago1}</ReadCell>
+      case 'pago2':
+        return <ReadCell>{alumno.fechaPago2}</ReadCell>
+      case 'pago3':
+        return <ReadCell>{alumno.fechaPago3}</ReadCell>
+      case 'total':
+        return <BadgeCell>{formatUsd(totalPagado(alumno))}</BadgeCell>
+      case 'saldo':
+        return <ReadCell>{formatUsd(saldo(alumno))}</ReadCell>
+      case 'estatus':
+        return <BadgeCell>{estatusPago(alumno)}</BadgeCell>
+      case 'bienvenida':
+        return <ReadCell>{alumno.fechaCorreoBienvenida}</ReadCell>
+      case 'carpeta':
+        return <ReadCell>{alumno.carpetaDrive}</ReadCell>
+      case 'curpDrive':
+        return <ReadCell>{alumno.curpDrive}</ReadCell>
+      case 'boletas':
+        return <ReadCell>{alumno.boletasDrive}</ReadCell>
+      case 'expediente':
+        return <BadgeCell>{etiquetaExpediente(alumno)}</BadgeCell>
+      case 'autorizacion':
+        return <ReadCell>{alumno.autorizacionControlEscolar}</ReadCell>
+      case 'validacion':
+        return <ReadCell>{alumno.validacionArchivoFinal}</ReadCell>
+      case 'fechaArchivo':
+        return <ReadCell>{alumno.fechaInclusionArchivoFinal}</ReadCell>
+      case 'devolucionSn':
+        return <ReadCell>{alumno.devolucionSolicitada}</ReadCell>
+      case 'fechaDevolucion':
+        return <ReadCell>{alumno.fechaDevolucion}</ReadCell>
+      case 'observaciones':
+        return <ReadCell>{alumno.observaciones}</ReadCell>
+    }
+  }
 
   switch (colId) {
     case 'folio':
@@ -282,7 +393,7 @@ function AlumnoCell({
         />
       )
     case 'nivel':
-      return <ReadCell>{alumno.nivel}</ReadCell>
+      return <BadgeCell>{alumno.nivel}</BadgeCell>
     case 'grado':
       return <ReadCell>{alumno.grado}</ReadCell>
     case 'nombre':
@@ -298,7 +409,7 @@ function AlumnoCell({
     case 'correo':
       return <ReadCell>{alumno.correoTutor}</ReadCell>
     case 'incorporacion':
-      return <ReadCell>{alumno.tipoIncorporacion}</ReadCell>
+      return <BadgeCell>{alumno.tipoIncorporacion}</BadgeCell>
     case 'pago1':
       return <ReadCell>{alumno.fechaPago1}</ReadCell>
     case 'pago2':
@@ -306,28 +417,17 @@ function AlumnoCell({
     case 'pago3':
       return <ReadCell>{alumno.fechaPago3}</ReadCell>
     case 'total':
-      return <ReadCell>{formatUsd(totalPagado(alumno))}</ReadCell>
+      return <BadgeCell>{formatUsd(totalPagado(alumno))}</BadgeCell>
     case 'saldo':
       return <ReadCell>{formatUsd(saldo(alumno))}</ReadCell>
     case 'estatus':
-      return <ReadCell>{estatusPago(alumno)}</ReadCell>
+      return <BadgeCell>{estatusPago(alumno)}</BadgeCell>
     case 'bienvenida':
       return (
         <BienvenidaCell
           alumno={alumno}
           tone={tone}
           onChange={(fechaCorreoBienvenida) => patch({ fechaCorreoBienvenida })}
-        />
-      )
-    case 'alta':
-      return (
-        <CellInput
-          type="date"
-          value={alumno.fechaAltaReporteInicial}
-          onChange={(fechaAltaReporteInicial) =>
-            patch({ fechaAltaReporteInicial })
-          }
-          tone={tone}
         />
       )
     case 'carpeta':
@@ -337,7 +437,7 @@ function AlumnoCell({
           options={SN_OPTIONS}
           tone={tone}
           onChange={(carpetaDrive) =>
-            patch({ carpetaDrive: carpetaDrive as SN })
+            patchDrive('carpetaDrive', carpetaDrive as SN)
           }
         />
       )
@@ -347,7 +447,7 @@ function AlumnoCell({
           value={alumno.curpDrive}
           options={SN_OPTIONS}
           tone={tone}
-          onChange={(curpDrive) => patch({ curpDrive: curpDrive as SN })}
+          onChange={(curpDrive) => patchDrive('curpDrive', curpDrive as SN)}
         />
       )
     case 'boletas':
@@ -357,18 +457,25 @@ function AlumnoCell({
           options={SN_OPTIONS}
           tone={tone}
           onChange={(boletasDrive) =>
-            patch({ boletasDrive: boletasDrive as SN })
+            patchDrive('boletasDrive', boletasDrive as SN)
           }
         />
       )
-    case 'expediente':
+    case 'expediente': {
+      const label = etiquetaExpediente(alumno)
       return (
-        <CellInput
-          value={alumno.expedienteDocumental}
-          onChange={(expedienteDocumental) => patch({ expedienteDocumental })}
-          tone={tone}
-        />
+        <BadgeCell
+          title="Completo si Carpeta, CURP y Boletas Drive están en Si"
+          tone={
+            label === 'Completo'
+              ? 'bg-chip-activos/25 text-text-activos'
+              : 'bg-black/5 text-ink-muted'
+          }
+        >
+          {label}
+        </BadgeCell>
       )
+    }
     case 'autorizacion':
       return (
         <CellSelect
@@ -439,9 +546,10 @@ function AlumnoCell({
 type Props = {
   alumnos: Alumno[]
   onChange: (id: string, patch: AlumnoPatch) => void
+  canEditNivel: (nivel: Alumno['nivel']) => boolean
 }
 
-export function AlumnosTable({ alumnos, onChange }: Props) {
+export function AlumnosTable({ alumnos, onChange, canEditNivel }: Props) {
   const [widths, setWidths] = useState<Record<ColumnId, number>>(loadWidths)
   const [collapsed, setCollapsed] = useState<CollapsedMap>(loadCollapsed)
   const [assignments, setAssignments] =
@@ -751,6 +859,7 @@ export function AlumnosTable({ alumnos, onChange }: Props) {
                         colId={col.id}
                         alumno={alumno}
                         onChange={onChange}
+                        editable={canEditNivel(alumno.nivel)}
                       />
                     </td>
                   ))}

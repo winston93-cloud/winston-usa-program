@@ -10,9 +10,15 @@ type Props = {
   open: boolean
   onClose: () => void
   onReset: () => void
+  canReset?: boolean
 }
 
-export function InstructionsModal({ open, onClose, onReset }: Props) {
+export function InstructionsModal({
+  open,
+  onClose,
+  onReset,
+  canReset = true,
+}: Props) {
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
@@ -84,14 +90,16 @@ export function InstructionsModal({ open, onClose, onReset }: Props) {
             muestra.
           </li>
         </ul>
-        <button
-          type="button"
-          onClick={onReset}
-          className="mt-5 inline-flex items-center gap-2 rounded-lg border border-brand-border px-4 py-2 text-[0.95rem] font-semibold text-brand-on-surface hover:bg-brand-soft"
-        >
-          <FontAwesomeIcon icon={faRotateLeft} />
-          Vaciar registros del programa
-        </button>
+        {canReset ? (
+          <button
+            type="button"
+            onClick={onReset}
+            className="mt-5 inline-flex items-center gap-2 rounded-lg border border-brand-border px-4 py-2 text-[0.95rem] font-semibold text-brand-on-surface hover:bg-brand-soft"
+          >
+            <FontAwesomeIcon icon={faRotateLeft} />
+            Vaciar registros del programa
+          </button>
+        ) : null}
       </div>
     </div>
   )

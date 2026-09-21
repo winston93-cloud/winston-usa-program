@@ -14,19 +14,27 @@ import {
   type AlumnoLookup,
   type AlumnoRow,
 } from '../lib/alumnoMapper'
+import { crearAlumnoPrueba, isAlumnoPrueba } from '../lib/alumnoPrueba'
 import { CICLO_NUMERO } from '../lib/constants'
 import { insforge, isInsforgeConfigured } from '../lib/insforge'
-import type { Alumno, AlumnoPatch } from '../types/alumno'
+import type { Alumno, AlumnoPatch, Nivel } from '../types/alumno'
 
 export type SyncPagosResult = {
   inserted: number
   updated: number
   alumnos: number
-  /** Filas nuevas tras el sync (para carta de bienvenida, etc.). */
+  /** Filas nuevas tras el sync. */
   nuevos: Alumno[]
+  /** Primer pago recién detectado → generar y enviar carta. */
+  pagosNuevos: Alumno[]
 }
 
 const TABLE = 'usa_programa_alumno'
+
+function mergeConPruebas(list: Alumno[], prev: Alumno[]): Alumno[] {
+  const pruebas = prev.filter((a) => isAlumnoPrueba(a.id))
+  return pruebas.length ? [...list, ...pruebas] : list
+}
 
 type StoreValue = {
   alumnos: Alumno[]
@@ -39,6 +47,8 @@ type StoreValue = {
   applyAlumnoRef: (id: string, alumnoRef: string) => Promise<void>
   syncFromPagos: () => Promise<SyncPagosResult | null>
   resetSeed: () => void
+  /** Fila local de prueba (no InsForge). */
+  addAlumnoPrueba: (nivel: Nivel) => Alumno
 }
 
 const AlumnosContext = createContext<StoreValue | null>(null)
@@ -52,7 +62,7 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async () => {
     if (!isInsforgeConfigured) {
       setError('InsForge no configurado (INSFORGE_URL / INSFORGE_ANON_KEY).')
-      setAlumnos([])
+      setAlumnos((prev) => prev.filter((a) => isAlumnoPrueba(a.id)))
       setLoading(false)
       return
     }
@@ -61,10 +71,11 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
 
     if (err) {
       setError(err.message ?? 'Error al cargar registros del programa')
-      setAlumnos([])
+      setAlumnos((prev) => prev.filter((a) => isAlumnoPrueba(a.id)))
     } else {
       setError(null)
-      setAlumnos(((data ?? []) as AlumnoRow[]).map(rowToAlumno))
+      const list = ((data ?? []) as AlumnoRow[]).map(rowToAlumno)
+      setAlumnos((prev) => mergeConPruebas(list, prev))
     }
     setLoading(false)
   }, [])
@@ -75,11 +86,18 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
 
   const clearError = useCallback(() => setError(null), [])
 
+  const addAlumnoPrueba = useCallback((nivel: Nivel) => {
+    const row = crearAlumnoPrueba(nivel)
+    setAlumnos((prev) => [row, ...prev])
+    return row
+  }, [])
+
   const updateAlumno = useCallback(
     (id: string, patch: AlumnoPatch) => {
       setAlumnos((prev) =>
         prev.map((a) => (a.id === id ? { ...a, ...patch } : a)),
       )
+      if (isAlumnoPrueba(id)) return
       const rowPatch = patchToRow(patch)
       if (Object.keys(rowPatch).length === 0) return
       void (async () => {
@@ -98,6 +116,10 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
 
   const applyAlumnoRef = useCallback(
     async (id: string, alumnoRef: string) => {
+      if (isAlumnoPrueba(id)) {
+        updateAlumno(id, { alumnoRef: alumnoRef.trim() })
+        return
+      }
       const raw = alumnoRef.trim()
       updateAlumno(id, { alumnoRef: raw })
       if (!raw) return
@@ -155,7 +177,14 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
       return null
     }
     setSyncing(true)
-    const beforeIds = new Set(alumnos.map((a) => a.id))
+    const beforeIds = new Set(
+      alumnos.filter((a) => !isAlumnoPrueba(a.id)).map((a) => a.id),
+    )
+    const beforePago1 = new Map(
+      alumnos
+        .filter((a) => !isAlumnoPrueba(a.id))
+        .map((a) => [a.id, Boolean(a.fechaPago1?.trim())] as const),
+    )
     const { data, error: err } = await insforge.database.rpc(
       'usa_sync_pagos_programa',
       { p_ciclo: CICLO_NUMERO },
@@ -165,10 +194,13 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
       setSyncing(false)
       return null
     }
-    const rows = (data ?? []) as Omit<SyncPagosResult, 'nuevos'>[]
+    const rows = (data ?? []) as Omit<
+      SyncPagosResult,
+      'nuevos' | 'pagosNuevos'
+    >[]
     const result = Array.isArray(rows)
       ? rows[0]
-      : (data as Omit<SyncPagosResult, 'nuevos'>)
+      : (data as Omit<SyncPagosResult, 'nuevos' | 'pagosNuevos'>)
 
     const { data: listData, error: listErr } = await insforge.database.rpc(
       'usa_programa_list',
@@ -179,15 +211,21 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
       return null
     }
     const list = ((listData ?? []) as AlumnoRow[]).map(rowToAlumno)
-    setAlumnos(list)
+    setAlumnos((prev) => mergeConPruebas(list, prev))
     setError(null)
     setSyncing(false)
     const nuevos = list.filter((a) => !beforeIds.has(a.id))
+    const pagosNuevos = list.filter((a) => {
+      if (!a.fechaPago1?.trim()) return false
+      const teniaPago = beforePago1.get(a.id) === true
+      return !teniaPago
+    })
     return {
       inserted: result?.inserted ?? 0,
       updated: result?.updated ?? 0,
       alumnos: result?.alumnos ?? list.length,
       nuevos,
+      pagosNuevos,
     }
   }, [alumnos])
 
@@ -219,6 +257,7 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
       applyAlumnoRef,
       syncFromPagos,
       resetSeed,
+      addAlumnoPrueba,
     }),
     [
       alumnos,
@@ -230,6 +269,7 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
       applyAlumnoRef,
       syncFromPagos,
       resetSeed,
+      addAlumnoPrueba,
     ],
   )
 

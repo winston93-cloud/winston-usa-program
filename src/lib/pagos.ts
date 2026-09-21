@@ -1,5 +1,5 @@
 import { CUOTA_ANUAL_USD, PAGO_1_USD, PAGO_2_USD, PAGO_3_USD } from './constants'
-import type { Alumno, ChipFiltro, EstatusPago, Nivel } from '../types/alumno'
+import type { Alumno, ChipFiltro, EstatusPago, Nivel, SN } from '../types/alumno'
 
 export function totalPagado(alumno: Alumno): number {
   let total = 0
@@ -31,6 +31,41 @@ export function esBaja(alumno: Alumno): boolean {
   return alumno.estado === 'Baja - gestionar devolución'
 }
 
+/** Expediente completo: Carpeta, CURP y Boletas Drive en Si. */
+export function expedienteCompleto(alumno: Pick<
+  Alumno,
+  'carpetaDrive' | 'curpDrive' | 'boletasDrive'
+>): boolean {
+  return (
+    alumno.carpetaDrive === 'Si' &&
+    alumno.curpDrive === 'Si' &&
+    alumno.boletasDrive === 'Si'
+  )
+}
+
+export function etiquetaExpediente(
+  alumno: Pick<Alumno, 'carpetaDrive' | 'curpDrive' | 'boletasDrive'>,
+): 'Completo' | 'Incompleto' {
+  return expedienteCompleto(alumno) ? 'Completo' : 'Incompleto'
+}
+
+/**
+ * Listos para archivo final: liquidados (activos) +
+ * primeros dos de expediente (Carpeta Drive y CURP Drive).
+ */
+export function listoArchivoFinal(alumno: Alumno): boolean {
+  return (
+    esLiquidado(alumno) &&
+    alumno.estado === 'Activo' &&
+    alumno.carpetaDrive === 'Si' &&
+    alumno.curpDrive === 'Si'
+  )
+}
+
+export function isSi(value: SN | string): boolean {
+  return value === 'Si' || value === 'S'
+}
+
 export function matchesChip(alumno: Alumno, chip: ChipFiltro): boolean {
   switch (chip) {
     case 'todos':
@@ -42,11 +77,11 @@ export function matchesChip(alumno: Alumno, chip: ChipFiltro): boolean {
     case 'liquidados':
       return esLiquidado(alumno) && alumno.estado === 'Activo'
     case 'archivo':
-      return alumno.validacionArchivoFinal === 'S' && esLiquidado(alumno)
+      return listoArchivoFinal(alumno)
     case 'devoluciones':
       return (
         alumno.estado !== 'Reembolso Realizado' &&
-        (esBaja(alumno) || alumno.devolucionSolicitada === 'S')
+        (esBaja(alumno) || isSi(alumno.devolucionSolicitada))
       )
   }
 }

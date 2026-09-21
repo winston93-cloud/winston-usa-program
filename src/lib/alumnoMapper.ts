@@ -1,4 +1,5 @@
-import type { Alumno, AlumnoPatch } from '../types/alumno'
+import type { Alumno, AlumnoPatch, SN } from '../types/alumno'
+import { etiquetaExpediente } from './pagos'
 
 /** Fila de programa + identidad en vivo (RPC usa_programa_list). */
 export type AlumnoRow = {
@@ -18,7 +19,7 @@ export type AlumnoRow = {
   fecha_pago2: string
   fecha_pago3: string
   fecha_correo_bienvenida: string
-  fecha_alta_reporte_inicial: string
+  fecha_alta_reporte_inicial?: string
   carpeta_drive: string
   curp_drive: string
   boletas_drive: string
@@ -55,7 +56,6 @@ export type ProgramaPatchRow = {
   fecha_pago2?: string
   fecha_pago3?: string
   fecha_correo_bienvenida?: string
-  fecha_alta_reporte_inicial?: string
   carpeta_drive?: string
   curp_drive?: string
   boletas_drive?: string
@@ -68,7 +68,22 @@ export type ProgramaPatchRow = {
   observaciones?: string
 }
 
+/** Lee S/N o Si/No históricos → Si/No de UI. */
+export function toUiSn(raw: string | null | undefined): SN {
+  const v = (raw ?? '').trim()
+  if (v === 'S' || v === 'Si' || v === 'Sí' || v === 'SI') return 'Si'
+  return 'No'
+}
+
+/** Persiste Si/No de UI como S/N en BD (compatibilidad). */
+export function toDbSn(value: SN | string): string {
+  return value === 'Si' || value === 'S' || value === 'Sí' ? 'S' : 'N'
+}
+
 export function rowToAlumno(row: AlumnoRow): Alumno {
+  const carpetaDrive = toUiSn(row.carpeta_drive)
+  const curpDrive = toUiSn(row.curp_drive)
+  const boletasDrive = toUiSn(row.boletas_drive)
   return {
     id: row.id,
     alumnoId: row.alumno_id,
@@ -87,21 +102,31 @@ export function rowToAlumno(row: AlumnoRow): Alumno {
     fechaPago2: row.fecha_pago2,
     fechaPago3: row.fecha_pago3,
     fechaCorreoBienvenida: row.fecha_correo_bienvenida,
-    fechaAltaReporteInicial: row.fecha_alta_reporte_inicial,
-    carpetaDrive: row.carpeta_drive as Alumno['carpetaDrive'],
-    curpDrive: row.curp_drive as Alumno['curpDrive'],
-    boletasDrive: row.boletas_drive as Alumno['boletasDrive'],
-    expedienteDocumental: row.expediente_documental,
-    autorizacionControlEscolar:
-      row.autorizacion_control_escolar as Alumno['autorizacionControlEscolar'],
-    validacionArchivoFinal:
-      row.validacion_archivo_final as Alumno['validacionArchivoFinal'],
+    carpetaDrive,
+    curpDrive,
+    boletasDrive,
+    expedienteDocumental: etiquetaExpediente({
+      carpetaDrive,
+      curpDrive,
+      boletasDrive,
+    }),
+    autorizacionControlEscolar: toUiSn(row.autorizacion_control_escolar),
+    validacionArchivoFinal: toUiSn(row.validacion_archivo_final),
     fechaInclusionArchivoFinal: row.fecha_inclusion_archivo_final,
-    devolucionSolicitada: row.devolucion_solicitada as Alumno['devolucionSolicitada'],
+    devolucionSolicitada: toUiSn(row.devolucion_solicitada),
     fechaDevolucion: row.fecha_devolucion,
     observaciones: row.observaciones,
   }
 }
+
+const SN_KEYS = new Set<keyof AlumnoPatch>([
+  'carpetaDrive',
+  'curpDrive',
+  'boletasDrive',
+  'autorizacionControlEscolar',
+  'validacionArchivoFinal',
+  'devolucionSolicitada',
+])
 
 const PATCH_MAP: Partial<Record<keyof AlumnoPatch, keyof ProgramaPatchRow>> = {
   folio: 'folio',
@@ -111,7 +136,6 @@ const PATCH_MAP: Partial<Record<keyof AlumnoPatch, keyof ProgramaPatchRow>> = {
   fechaPago2: 'fecha_pago2',
   fechaPago3: 'fecha_pago3',
   fechaCorreoBienvenida: 'fecha_correo_bienvenida',
-  fechaAltaReporteInicial: 'fecha_alta_reporte_inicial',
   carpetaDrive: 'carpeta_drive',
   curpDrive: 'curp_drive',
   boletasDrive: 'boletas_drive',
@@ -135,6 +159,8 @@ export function patchToRow(patch: AlumnoPatch): ProgramaPatchRow {
     if (col === 'alumno_ref') {
       const n = Number.parseInt(String(value).trim(), 10)
       row.alumno_ref = Number.isFinite(n) ? n : null
+    } else if (SN_KEYS.has(key)) {
+      ;(row as Record<string, string>)[col] = toDbSn(String(value))
     } else {
       ;(row as Record<string, string>)[col] = String(value)
     }

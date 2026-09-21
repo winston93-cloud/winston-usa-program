@@ -11,7 +11,7 @@ export type EstadoAlumno = (typeof ESTADOS)[number]
 export const TIPOS_INCORPORACION = ['Nuevo Ingreso', 'Continuidad'] as const
 export type TipoIncorporacion = (typeof TIPOS_INCORPORACION)[number]
 
-export const SN_OPTIONS = ['S', 'N'] as const
+export const SN_OPTIONS = ['Si', 'No'] as const
 export type SN = (typeof SN_OPTIONS)[number]
 
 export type EstatusPago =
@@ -48,10 +48,10 @@ export type Alumno = {
   fechaPago2: string
   fechaPago3: string
   fechaCorreoBienvenida: string
-  fechaAltaReporteInicial: string
   carpetaDrive: SN
   curpDrive: SN
   boletasDrive: SN
+  /** Derivado: Completo si Carpeta+CURP+Boletas Drive = Si */
   expedienteDocumental: string
   autorizacionControlEscolar: SN
   validacionArchivoFinal: SN

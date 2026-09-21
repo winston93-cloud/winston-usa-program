@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron-alertas-pagos",
+      "schedule": "0 15 * * *"
+    }
+  ]
+}
