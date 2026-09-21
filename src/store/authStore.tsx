@@ -94,9 +94,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         'Este correo de Google no tiene acceso. Solo Sistemas y Control Escolar.',
       )
     }
+    const profileName =
+      data.user.profile &&
+      typeof data.user.profile === 'object' &&
+      'name' in data.user.profile
+        ? String((data.user.profile as { name?: string }).name ?? '').trim()
+        : ''
     const next: UsaSession = {
       ...access,
-      nombre: data.user.name || access.label,
+      nombre: profileName || access.label,
       usuario: data.user.email.split('@')[0] || data.user.email,
       exp: Date.now() + 12 * 60 * 60 * 1000,
     }
