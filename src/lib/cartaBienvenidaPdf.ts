@@ -443,7 +443,8 @@ function drawPagosTable(page: PDFPage, font: PDFFont, topY: number): number {
 
 /** Descarga el PDF en el navegador (pruebas locales). */
 export function downloadPdfBytes(bytes: Uint8Array, fileName: string): void {
-  const blob = new Blob([bytes], { type: 'application/pdf' })
+  const copy = Uint8Array.from(bytes)
+  const blob = new Blob([copy], { type: 'application/pdf' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
