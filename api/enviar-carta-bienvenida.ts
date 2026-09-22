@@ -7,8 +7,9 @@ import nodemailer from 'nodemailer'
 import {
   correoCePorNivel,
   correoPrueba,
+  mailSendErrorMessage,
   smtpControlEscolar,
-} from './_lib/mailSmtp'
+} from './_lib/mailSmtp.js'
 
 const COPIA_SISTEMAS = 'sistemas.desarrollo@winston93.edu.mx'
 
@@ -154,7 +155,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       replyTo,
     })
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Error al enviar correo'
-    return res.status(500).json({ ok: false, error: message })
+    return res.status(500).json({ ok: false, error: mailSendErrorMessage(err) })
   }
 }

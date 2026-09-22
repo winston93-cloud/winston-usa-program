@@ -2,8 +2,8 @@
  * Login Google (GIS access_token) + allowlist USA Program.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { resolveAccessByEmail } from '../src/lib/authAccess'
-import { encodeSession, verifyGoogleAccessToken } from '../_lib/authSession'
+import { resolveAccessByEmail } from '../_lib/authAccess.js'
+import { encodeSession, verifyGoogleAccessToken } from '../_lib/authSession.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') {

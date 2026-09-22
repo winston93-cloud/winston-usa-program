@@ -110,10 +110,15 @@ export function Dashboard() {
                         diasAntes: 10,
                       }),
                     })
-                    const alerta = (await alertaRes.json().catch(() => ({}))) as {
-                      ok?: boolean
-                      error?: string
-                      to?: string
+                    const alertaText = await alertaRes.text()
+                    let alerta: { ok?: boolean; error?: string; to?: string } =
+                      {}
+                    try {
+                      alerta = JSON.parse(alertaText) as typeof alerta
+                    } catch {
+                      alerta = {
+                        error: alertaText.slice(0, 180) || `HTTP ${alertaRes.status}`,
+                      }
                     }
                     if (alertaRes.ok && alerta.ok) {
                       pushToast(
@@ -122,7 +127,7 @@ export function Dashboard() {
                       )
                     } else {
                       pushToast(
-                        `Aviso: ${alerta.error ?? 'falló (¿MAIL_PASS?)'}`,
+                        `Aviso: ${alerta.error ?? `HTTP ${alertaRes.status}`}`,
                         'error',
                       )
                     }

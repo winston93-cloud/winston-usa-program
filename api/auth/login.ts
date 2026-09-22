@@ -3,8 +3,8 @@
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@insforge/sdk'
-import { resolveAccessByEmail } from '../src/lib/authAccess'
-import { encodeSession } from '../_lib/authSession'
+import { resolveAccessByEmail } from '../_lib/authAccess.js'
+import { encodeSession } from '../_lib/authSession.js'
 
 type AuthLoginRow = {
   usuario_id: number

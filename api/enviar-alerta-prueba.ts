@@ -4,13 +4,13 @@
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import nodemailer from 'nodemailer'
-import { correoPrueba, smtpAvisos } from './_lib/mailSmtp'
+import { correoPrueba, mailSendErrorMessage, smtpAvisos } from './_lib/mailSmtp.js'
 import {
   fechaVencimientoIso,
   VENCIMIENTOS_PAGO,
   type DiasAlertaPago,
   type ParcialidadPago,
-} from '../src/lib/vencimientosPagos'
+} from './_lib/vencimientosPagos.js'
 
 type Body = {
   alumnoNombre?: string
@@ -132,7 +132,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } catch (err) {
     return res.status(500).json({
       ok: false,
-      error: err instanceof Error ? err.message : 'Error al enviar aviso',
+      error: mailSendErrorMessage(err),
     })
   }
 }

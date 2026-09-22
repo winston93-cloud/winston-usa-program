@@ -1,6 +1,6 @@
 import { createHmac, createHash, timingSafeEqual } from 'node:crypto'
-import type { UsaSession } from '../src/lib/authAccess'
-import { resolveAccessByEmail } from '../src/lib/authAccess'
+import type { UsaSession } from './authAccess.js'
+import { resolveAccessByEmail } from './authAccess.js'
 
 export function authSecret(): string {
   return (

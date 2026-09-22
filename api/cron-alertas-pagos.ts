@@ -5,13 +5,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@insforge/sdk'
 import nodemailer from 'nodemailer'
-import { correoPrueba, smtpAvisos } from './_lib/mailSmtp'
+import { correoPrueba, smtpAvisos } from './_lib/mailSmtp.js'
 import {
   alertasParaHoy,
   hoyMexicoCity,
   VENCIMIENTOS_PAGO,
   type AlertaPendiente,
-} from '../src/lib/vencimientosPagos'
+} from './_lib/vencimientosPagos.js'
 
 type ListRow = {
   id: string
