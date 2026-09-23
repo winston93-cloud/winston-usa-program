@@ -1,3 +1,5 @@
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
 import { CHIP_HINTS, CHIP_LABELS, formatUsd } from '../lib/constants'
 import type { ChipFiltro } from '../types/alumno'
 import type { KpiData } from './KpiBar'
@@ -67,46 +69,65 @@ const CHIP_STYLE: Record<string, { idle: string; active: string; dot: string }> 
 type Props = {
   chip: ChipFiltro
   onChip: (chip: ChipFiltro) => void
+  search: string
+  onSearch: (value: string) => void
   data: KpiData
   showing: string
 }
 
-export function StatusChips({ chip, onChip, data, showing }: Props) {
+export function StatusChips({
+  chip,
+  onChip,
+  search,
+  onSearch,
+  data,
+  showing,
+}: Props) {
   return (
     <div className="shrink-0 space-y-2">
-      {/*
-        Móvil: scroll horizontal (chips a tamaño natural).
-        md+: fila a ancho completo con flex-grow proporcional.
-      */}
-      <div
-        className={`mt-2 -mx-1 flex w-[calc(100%+0.5rem)] items-stretch overflow-x-auto px-1 pb-0.5 md:mx-0 md:w-full md:overflow-visible md:px-0 md:pb-0 ${CHIP_GAP_CLASS}`}
-      >
-        {FILTER_CHIPS.map(({ id, key, color }) => {
-          const selected = chip === id
-          const style = CHIP_STYLE[color]
-          return (
-            <button
-              key={id}
-              type="button"
-              title={CHIP_HINTS[id]}
-              onClick={() => onChip(id)}
-              style={{ flexGrow: CHIP_FLEX_GROW[id], flexBasis: 0 }}
-              className={`inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full border px-3 py-2 text-[0.65rem] font-semibold tracking-wide uppercase sm:gap-2 sm:text-xs md:min-w-0 md:shrink ${
-                selected ? style.active : style.idle
-              }`}
-            >
-              {/* <span
-                className={`size-2 shrink-0 rounded-full ${selected ? 'bg-on-brand' : style.dot}`}
-              /> */}
-              <span className="whitespace-nowrap md:truncate">
-                {CHIP_LABELS[id]}
-              </span>
-              <span className="shrink-0 rounded-full bg-black/10 px-2 py-0.5 text-[11px] tabular-nums normal-case">
-                {data[key]}
-              </span>
-            </button>
-          )
-        })}
+      {/* Misma fila: buscador (izq) + chips. */}
+      <div className={`mt-2 flex w-full items-stretch ${CHIP_GAP_CLASS}`}>
+        <label className="relative flex w-[min(100%,14rem)] shrink-0 items-center sm:w-56 md:w-64">
+          <span className="pointer-events-none absolute left-3 text-ink-muted">
+            <FontAwesomeIcon icon={faMagnifyingGlass} className="text-sm" />
+          </span>
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => onSearch(e.target.value)}
+            placeholder="Buscar…"
+            aria-label="Buscar alumno"
+            className="h-full w-full rounded-full border border-brand-border bg-cell py-2 pr-3 pl-9 text-sm text-ink outline-none placeholder:text-ink-muted focus:border-brand-accent focus:ring-2 focus:ring-brand-muted"
+          />
+        </label>
+
+        <div
+          className={`flex min-w-0 flex-1 items-stretch overflow-x-auto pb-0.5 md:overflow-visible md:pb-0 ${CHIP_GAP_CLASS}`}
+        >
+          {FILTER_CHIPS.map(({ id, key, color }) => {
+            const selected = chip === id
+            const style = CHIP_STYLE[color]
+            return (
+              <button
+                key={id}
+                type="button"
+                title={CHIP_HINTS[id]}
+                onClick={() => onChip(id)}
+                style={{ flexGrow: CHIP_FLEX_GROW[id], flexBasis: 0 }}
+                className={`inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full border px-3 py-2 text-[0.65rem] font-semibold tracking-wide uppercase sm:gap-2 sm:text-xs md:min-w-0 md:shrink ${
+                  selected ? style.active : style.idle
+                }`}
+              >
+                <span className="whitespace-nowrap md:truncate">
+                  {CHIP_LABELS[id]}
+                </span>
+                <span className="shrink-0 rounded-full bg-black/10 px-2 py-0.5 text-[11px] tabular-nums normal-case">
+                  {data[key]}
+                </span>
+              </button>
+            )
+          })}
+        </div>
       </div>
       <div className="flex flex-col gap-1 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-2 sm:text-[0.95rem]">
         <p className="text-ink-muted">{showing}</p>

@@ -1,216 +1,72 @@
 import {
-  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
-  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import {
-  faChevronDown,
-  faChevronRight,
-  faFilePdf,
-  faTableColumns,
-} from '@fortawesome/free-solid-svg-icons'
-import { COL_ASSIGN_KEY, COL_GROUPS_KEY, COL_WIDTHS_KEY, formatUsd } from '../lib/constants'
-import { generateAndDownloadCarta } from '../lib/generateCartaBienvenida'
+import { faArrowUpRightFromSquare, faIdCard } from '@fortawesome/free-solid-svg-icons'
+import { PAGO_1_USD, PAGO_2_USD, PAGO_3_USD } from '../lib/constants'
 import {
   etiquetaExpediente,
-  estatusPago,
-  isSi,
-  saldo,
-  totalPagado,
 } from '../lib/pagos'
 import {
   COLUMN_GROUP_BY_ID,
-  COLUMN_GROUPS,
-  DEFAULT_COL_WIDTHS,
+  DEFAULT_COL_WEIGHTS,
   GROUP_STYLES,
   STICKY_COLUMN_IDS,
   TABLE_COLUMNS,
+  TABLE_INLINE_COLUMN_IDS,
+  distributeWidths,
+  isDriveColumn,
+  isPagoColumn,
+  sectionSpansFor,
   type ColumnId,
   type GroupId,
 } from '../lib/tableColumns'
 import {
   ESTADOS,
-  SN_OPTIONS,
   type Alumno,
   type AlumnoPatch,
   type EstadoAlumno,
-  type SN,
 } from '../types/alumno'
-import { ColumnAssignModal } from './ColumnAssignModal'
+import { AlumnoFichaModal } from './AlumnoFichaModal'
+import { StatusMark } from './StatusMark'
 
-const inputClass =
-  'box-border w-full min-w-0 rounded-md border border-brand-border px-2 py-1.5 text-sm text-ink outline-none focus:ring-1 focus:ring-white'
 const readClass = 'truncate px-0.5 py-1 text-sm text-ink'
-/** Contenedor tipo “Cuota anual”: píldora semi-transparente. */
 const badgeClass =
   'inline-flex max-w-full truncate rounded-full bg-brand/10 px-2.5 py-1 text-sm text-ink'
 
-type CollapsedMap = Record<GroupId, boolean>
-
-function loadWidths(): Record<ColumnId, number> {
-  try {
-    const raw = localStorage.getItem(COL_WIDTHS_KEY)
-    if (!raw) return { ...DEFAULT_COL_WIDTHS }
-    const parsed = JSON.parse(raw) as Record<string, number>
-    const next = { ...DEFAULT_COL_WIDTHS }
-    for (const col of TABLE_COLUMNS) {
-      if (typeof parsed[col.id] === 'number') next[col.id] = parsed[col.id]
-    }
-    return next
-  } catch {
-    return { ...DEFAULT_COL_WIDTHS }
-  }
+const PAGO_SUBTITLE_USD: Partial<Record<ColumnId, number>> = {
+  pago1: PAGO_1_USD,
+  pago2: PAGO_2_USD,
+  pago3: PAGO_3_USD,
 }
 
-function defaultCollapsed(): CollapsedMap {
-  return {
-    identidad: false,
-    personales: false,
-    pagos: false,
-    expediente: false,
-    devoluciones: false,
-  }
-}
+/** Carpeta Drive del programa USA (band Drive → abrir en nueva pestaña). */
+const DRIVE_PROGRAMA_URL =
+  'https://drive.google.com/drive/folders/REEMPLAZAR_ID_CARPETA'
 
-function loadCollapsed(): CollapsedMap {
-  try {
-    const raw = localStorage.getItem(COL_GROUPS_KEY)
-    if (!raw) return defaultCollapsed()
-    return { ...defaultCollapsed(), ...(JSON.parse(raw) as CollapsedMap) }
-  } catch {
-    return defaultCollapsed()
-  }
-}
-
-function loadAssignments(): Record<ColumnId, GroupId> {
-  try {
-    const raw = localStorage.getItem(COL_ASSIGN_KEY)
-    if (!raw) return { ...COLUMN_GROUP_BY_ID }
-    const parsed = JSON.parse(raw) as Record<string, GroupId>
-    const next = { ...COLUMN_GROUP_BY_ID }
-    for (const col of TABLE_COLUMNS) {
-      if (parsed[col.id]) next[col.id] = parsed[col.id]
-    }
-    return next
-  } catch {
-    return { ...COLUMN_GROUP_BY_ID }
-  }
-}
-
-function groupOrder(id: GroupId): number {
-  return COLUMN_GROUPS.findIndex((group) => group.id === id)
-}
-
-/** Fondo de CELDA: siempre franja de sección (sin tinte de estado en toda la fila). */
-function cellTone(_estado: EstadoAlumno, groupId: GroupId): string {
+function cellTone(_estado: EstadoAlumno, groupId: GroupId | null): string {
+  if (!groupId) return GROUP_STYLES.identidad.cell
   return GROUP_STYLES[groupId].cell
-}
-
-/**
- * Inputs de la fila (excepto select Estado).
- * Baja: solo un borde suave; fondo = celda normal (tone vacío → bg-cell).
- */
-function rowInputTone(estado: EstadoAlumno): string {
-  if (estado === 'Baja - gestionar devolución') {
-    return 'border-estado-baja-border/50'
-  }
-  if (estado === 'Reembolso Realizado') {
-    return 'border-estado-reembolso-border/40 text-ink-muted'
-  }
-  return ''
-}
-
-/** Select Estado: badge apagado (sin neón) sobre el azul de la tabla. */
-function estadoSelectClass(estado: EstadoAlumno): string {
-  if (estado === 'Baja - gestionar devolución') {
-    return 'border-estado-baja-border bg-estado-baja-input font-semibold text-estado-baja-text'
-  }
-  if (estado === 'Reembolso Realizado') {
-    return 'border-estado-reembolso-border bg-estado-reembolso-input font-medium text-estado-reembolso-text'
-  }
-  return 'border-estado-activo-border bg-estado-activo-input font-semibold text-estado-activo-text'
-}
-
-type CellProps = {
-  value: string
-  onChange: (value: string) => void
-  type?: 'text' | 'email' | 'date'
-  warn?: boolean
-  tone?: string
-  onBlurCommit?: (value: string) => void
-  title?: string
-}
-
-function CellInput({
-  value,
-  onChange,
-  type = 'text',
-  warn,
-  tone = '',
-  onBlurCommit,
-  title,
-}: CellProps) {
-  return (
-    <input
-      type={type}
-      value={value}
-      title={title}
-      onChange={(e) => onChange(e.target.value)}
-      onBlur={(e) => onBlurCommit?.(e.target.value)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' && onBlurCommit) {
-          ;(e.target as HTMLInputElement).blur()
-        }
-      }}
-      className={`${inputClass} ${tone || 'bg-cell'} ${
-        warn && !value.trim() ? 'border-baja-text ring-1 ring-baja-border' : ''
-      }`}
-    />
-  )
-}
-
-function CellSelect({
-  value,
-  options,
-  onChange,
-  className = '',
-  tone = '',
-}: {
-  value: string
-  options: readonly string[]
-  onChange: (value: string) => void
-  className?: string
-  tone?: string
-}) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className={`${inputClass} ${className || tone || 'bg-cell'}`}
-    >
-      {options.map((opt) => (
-        <option key={opt} value={opt}>
-          {opt}
-        </option>
-      ))}
-    </select>
-  )
 }
 
 function ReadCell({
   children,
   title,
+  align = 'center',
 }: {
   children: ReactNode
   title?: string
+  align?: 'left' | 'center'
 }) {
   return (
-    <div className={readClass} title={title}>
+    <div
+      className={`${readClass} ${align === 'center' ? 'text-center' : 'text-left'}`}
+      title={title}
+    >
       {children || '—'}
     </div>
   )
@@ -220,69 +76,21 @@ function BadgeCell({
   children,
   title,
   tone = 'bg-white/10 text-ink',
+  align = 'center',
 }: {
   children: ReactNode
   title?: string
   tone?: string
+  align?: 'left' | 'center'
 }) {
   const text = children == null || children === '' ? '—' : children
   return (
-    <div className="flex min-w-0 items-center">
+    <div
+      className={`flex min-w-0 items-center ${align === 'center' ? 'justify-center' : 'justify-start'}`}
+    >
       <span className={`${badgeClass} ${tone}`} title={title}>
         {text}
       </span>
-    </div>
-  )
-}
-
-function BienvenidaCell({
-  alumno,
-  tone,
-  onChange,
-}: {
-  alumno: Alumno
-  tone: string
-  onChange: (value: string) => void
-}) {
-  const [busy, setBusy] = useState(false)
-  const canDownload = Boolean(alumno.nombreCompleto?.trim())
-
-  return (
-    <div className="flex min-w-0 items-center gap-1">
-      <div className="min-w-0 flex-1">
-        <CellInput
-          type="date"
-          value={alumno.fechaCorreoBienvenida}
-          onChange={onChange}
-          tone={tone}
-        />
-      </div>
-      <button
-        type="button"
-        disabled={!canDownload || busy}
-        title={
-          canDownload
-            ? 'Descargar carta de bienvenida (PDF)'
-            : 'Sin nombre de alumno para generar la carta'
-        }
-        aria-label="Descargar carta de bienvenida PDF"
-        onClick={() => {
-          void (async () => {
-            setBusy(true)
-            try {
-              await generateAndDownloadCarta(alumno)
-            } finally {
-              setBusy(false)
-            }
-          })()
-        }}
-        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-brand-border bg-cell text-brand-accent hover:bg-brand-soft disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        <FontAwesomeIcon
-          icon={faFilePdf}
-          className={`text-sm ${busy ? 'animate-pulse' : ''}`}
-        />
-      </button>
     </div>
   )
 }
@@ -292,254 +100,205 @@ function AlumnoCell({
   alumno,
   onChange,
   editable,
+  onOpenFicha,
 }: {
   colId: ColumnId
   alumno: Alumno
   onChange: (id: string, patch: AlumnoPatch) => void
   editable: boolean
+  onOpenFicha: () => void
 }) {
-  const warnObs =
-    alumno.estado === 'Baja - gestionar devolución' ||
-    isSi(alumno.devolucionSolicitada)
   const patch = (next: AlumnoPatch) => {
     if (!editable) return
     onChange(alumno.id, next)
   }
-  const tone = rowInputTone(alumno.estado)
 
-  const patchDrive = (
-    key: 'carpetaDrive' | 'curpDrive' | 'boletasDrive',
-    value: SN,
+  const toggleSn = (
+    key:
+      | 'carpetaDrive'
+      | 'curpDrive'
+      | 'boletasDrive'
+      | 'autorizacionControlEscolar'
+      | 'validacionArchivoFinal',
+    current: string,
   ) => {
-    const next = { ...alumno, [key]: value }
-    patch({
-      [key]: value,
-      expedienteDocumental: etiquetaExpediente(next),
-    })
+    const nextVal = current === 'Si' ? 'No' : 'Si'
+    if (
+      key === 'carpetaDrive' ||
+      key === 'curpDrive' ||
+      key === 'boletasDrive'
+    ) {
+      const nextAlumno = { ...alumno, [key]: nextVal }
+      patch({
+        [key]: nextVal,
+        expedienteDocumental: etiquetaExpediente(nextAlumno),
+      })
+      return
+    }
+    patch({ [key]: nextVal })
   }
 
-  if (!editable) {
-    // Solo lectura: mismos valores sin inputs
-    switch (colId) {
-      case 'folio':
-        return <ReadCell>{alumno.folio}</ReadCell>
-      case 'alumnoRef':
-        return <ReadCell>{alumno.alumnoRef}</ReadCell>
-      case 'estado':
-        return <BadgeCell>{alumno.estado}</BadgeCell>
-      case 'nivel':
-        return <BadgeCell>{alumno.nivel}</BadgeCell>
-      case 'grado':
-        return <ReadCell>{alumno.grado}</ReadCell>
-      case 'nombre':
-        return <ReadCell>{alumno.nombreCompleto}</ReadCell>
-      case 'curp':
-        return <ReadCell>{alumno.curp}</ReadCell>
-      case 'nacimiento':
-        return <ReadCell>{alumno.fechaNacimiento}</ReadCell>
-      case 'correo':
-        return <ReadCell>{alumno.correoTutor}</ReadCell>
-      case 'incorporacion':
-        return <BadgeCell>{alumno.tipoIncorporacion}</BadgeCell>
-      case 'pago1':
-        return <ReadCell>{alumno.fechaPago1}</ReadCell>
-      case 'pago2':
-        return <ReadCell>{alumno.fechaPago2}</ReadCell>
-      case 'pago3':
-        return <ReadCell>{alumno.fechaPago3}</ReadCell>
-      case 'total':
-        return <BadgeCell>{formatUsd(totalPagado(alumno))}</BadgeCell>
-      case 'saldo':
-        return <ReadCell>{formatUsd(saldo(alumno))}</ReadCell>
-      case 'estatus':
-        return <BadgeCell>{estatusPago(alumno)}</BadgeCell>
-      case 'bienvenida':
-        return <ReadCell>{alumno.fechaCorreoBienvenida}</ReadCell>
-      case 'carpeta':
-        return <ReadCell>{alumno.carpetaDrive}</ReadCell>
-      case 'curpDrive':
-        return <ReadCell>{alumno.curpDrive}</ReadCell>
-      case 'boletas':
-        return <ReadCell>{alumno.boletasDrive}</ReadCell>
-      case 'expediente':
-        return <BadgeCell>{etiquetaExpediente(alumno)}</BadgeCell>
-      case 'autorizacion':
-        return <ReadCell>{alumno.autorizacionControlEscolar}</ReadCell>
-      case 'validacion':
-        return <ReadCell>{alumno.validacionArchivoFinal}</ReadCell>
-      case 'fechaArchivo':
-        return <ReadCell>{alumno.fechaInclusionArchivoFinal}</ReadCell>
-      case 'devolucionSn':
-        return <ReadCell>{alumno.devolucionSolicitada}</ReadCell>
-      case 'fechaDevolucion':
-        return <ReadCell>{alumno.fechaDevolucion}</ReadCell>
-      case 'observaciones':
-        return <ReadCell>{alumno.observaciones}</ReadCell>
-    }
+  const snMark = (
+    done: boolean,
+    title: string,
+    onToggle?: () => void,
+    opts?: {
+      alert?: boolean
+      label?: string
+      variant?: 'mark' | 'tile'
+      tileIcon?: 'check' | 'stamp'
+      doneTone?: 'green' | 'blue'
+    },
+  ) => (
+    <div className="flex h-full min-h-9 w-full items-center justify-center">
+      <StatusMark
+        done={done}
+        pending={!done && !opts?.alert}
+        alert={opts?.alert}
+        variant={opts?.variant ?? 'tile'}
+        label={opts?.label}
+        tileIcon={opts?.tileIcon}
+        doneTone={opts?.doneTone}
+        title={title}
+        disabled={!editable || !onToggle}
+        onClick={editable && onToggle ? onToggle : undefined}
+      />
+    </div>
+  )
+
+  if (colId === 'ficha') {
+    return (
+      <div className="flex justify-center">
+        <button
+          type="button"
+          onClick={onOpenFicha}
+          title="Abrir ficha completa"
+          aria-label={`Ficha de ${alumno.nombreCompleto || alumno.folio}`}
+          className="inline-flex size-8 items-center justify-center rounded-md border border-brand-border bg-cell text-brand-accent hover:bg-brand-soft"
+        >
+          <FontAwesomeIcon icon={faIdCard} className="text-sm text-white" />
+        </button>
+      </div>
+    )
   }
 
   switch (colId) {
     case 'folio':
       return <ReadCell>{alumno.folio}</ReadCell>
-    case 'alumnoRef':
-      return <ReadCell>{alumno.alumnoRef}</ReadCell>
-    case 'estado':
-      return (
-        <CellSelect
-          value={alumno.estado}
-          options={ESTADOS}
-          className={estadoSelectClass(alumno.estado)}
-          onChange={(estado) => patch({ estado: estado as Alumno['estado'] })}
-        />
-      )
-    case 'nivel':
-      return <BadgeCell>{alumno.nivel}</BadgeCell>
-    case 'grado':
-      return <ReadCell>{alumno.grado}</ReadCell>
     case 'nombre':
+      return <ReadCell>{alumno.nombreCompleto}</ReadCell>
+    case 'estado': {
+      const short =
+        alumno.estado === 'Baja - gestionar devolución'
+          ? 'Baja'
+          : alumno.estado === 'Reembolso Realizado'
+            ? 'Reembolsado'
+            : 'Activo'
+      const tone =
+        alumno.estado === 'Baja - gestionar devolución'
+          ? 'border-mark-red bg-mark-red text-mark-on'
+          : alumno.estado === 'Reembolso Realizado'
+            ? 'border-mark-gray bg-mark-gray text-mark-on'
+            : 'border-mark-green bg-mark-green text-mark-on'
+      if (!editable) {
+        return (
+          <BadgeCell tone={tone} title={alumno.estado}>
+            {short}
+          </BadgeCell>
+        )
+      }
       return (
-        <ReadCell title="Desde ficha alumno (alumno_id)">
-          {alumno.nombreCompleto}
-        </ReadCell>
-      )
-    case 'curp':
-      return <ReadCell>{alumno.curp}</ReadCell>
-    case 'nacimiento':
-      return <ReadCell>{alumno.fechaNacimiento}</ReadCell>
-    case 'correo':
-      return <ReadCell>{alumno.correoTutor}</ReadCell>
-    case 'incorporacion':
-      return <BadgeCell>{alumno.tipoIncorporacion}</BadgeCell>
-    case 'pago1':
-      return <ReadCell>{alumno.fechaPago1}</ReadCell>
-    case 'pago2':
-      return <ReadCell>{alumno.fechaPago2}</ReadCell>
-    case 'pago3':
-      return <ReadCell>{alumno.fechaPago3}</ReadCell>
-    case 'total':
-      return <BadgeCell>{formatUsd(totalPagado(alumno))}</BadgeCell>
-    case 'saldo':
-      return <ReadCell>{formatUsd(saldo(alumno))}</ReadCell>
-    case 'estatus':
-      return <BadgeCell>{estatusPago(alumno)}</BadgeCell>
-    case 'bienvenida':
-      return (
-        <BienvenidaCell
-          alumno={alumno}
-          tone={tone}
-          onChange={(fechaCorreoBienvenida) => patch({ fechaCorreoBienvenida })}
-        />
-      )
-    case 'carpeta':
-      return (
-        <CellSelect
-          value={alumno.carpetaDrive}
-          options={SN_OPTIONS}
-          tone={tone}
-          onChange={(carpetaDrive) =>
-            patchDrive('carpetaDrive', carpetaDrive as SN)
+        <select
+          value={alumno.estado}
+          title={alumno.estado}
+          aria-label="Estado del alumno"
+          onChange={(e) =>
+            patch({ estado: e.target.value as EstadoAlumno })
           }
-        />
-      )
-    case 'curpDrive':
-      return (
-        <CellSelect
-          value={alumno.curpDrive}
-          options={SN_OPTIONS}
-          tone={tone}
-          onChange={(curpDrive) => patchDrive('curpDrive', curpDrive as SN)}
-        />
-      )
-    case 'boletas':
-      return (
-        <CellSelect
-          value={alumno.boletasDrive}
-          options={SN_OPTIONS}
-          tone={tone}
-          onChange={(boletasDrive) =>
-            patchDrive('boletasDrive', boletasDrive as SN)
-          }
-        />
-      )
-    case 'expediente': {
-      const label = etiquetaExpediente(alumno)
-      return (
-        <BadgeCell
-          title="Completo si Carpeta, CURP y Boletas Drive están en Si"
-          tone={
-            label === 'Completo'
-              ? 'bg-chip-activos/25 text-text-activos'
-              : 'bg-black/5 text-ink-muted'
-          }
+          className={`box-border w-full min-w-0 truncate rounded-md border px-1 py-1 text-center text-xs outline-none focus:ring-1 focus:ring-white ${tone}`}
         >
-          {label}
-        </BadgeCell>
+          {ESTADOS.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt === 'Baja - gestionar devolución'
+                ? 'Baja'
+                : opt === 'Reembolso Realizado'
+                  ? 'Reembolsado'
+                  : 'Activo'}
+            </option>
+          ))}
+        </select>
       )
     }
-    case 'autorizacion':
+    case 'pago1':
+    case 'pago2':
+    case 'pago3': {
+      const fecha =
+        colId === 'pago1'
+          ? alumno.fechaPago1
+          : colId === 'pago2'
+            ? alumno.fechaPago2
+            : alumno.fechaPago3
+      const n = colId === 'pago1' ? 1 : colId === 'pago2' ? 2 : 3
+      const pagado = Boolean(fecha?.trim())
       return (
-        <CellSelect
-          value={alumno.autorizacionControlEscolar}
-          options={SN_OPTIONS}
-          tone={tone}
-          onChange={(autorizacionControlEscolar) =>
-            patch({
-              autorizacionControlEscolar: autorizacionControlEscolar as SN,
-            })
-          }
-        />
+        <div className="flex h-full min-h-9 w-full items-center justify-center">
+          <StatusMark
+            done={pagado}
+            pending={!pagado}
+            variant="mark"
+            doneTone="blue"
+            title={pagado ? `Pago ${n} · ${fecha}` : `Pago ${n} pendiente`}
+          />
+        </div>
+      )
+    }
+    case 'carpeta':
+      return snMark(
+        alumno.carpetaDrive === 'Si',
+        alumno.carpetaDrive === 'Si'
+          ? 'Carpeta creada en Drive'
+          : 'Carpeta pendiente',
+        () => toggleSn('carpetaDrive', alumno.carpetaDrive),
+      )
+    case 'curpDrive':
+      return snMark(
+        alumno.curpDrive === 'Si',
+        alumno.curpDrive === 'Si' ? 'CURP en Drive' : 'CURP pendiente en Drive',
+        () => toggleSn('curpDrive', alumno.curpDrive),
+      )
+    case 'boletas':
+      return snMark(
+        alumno.boletasDrive === 'Si',
+        alumno.boletasDrive === 'Si'
+          ? 'Boletas en Drive'
+          : 'Boletas pendientes en Drive',
+        () => toggleSn('boletasDrive', alumno.boletasDrive),
+      )
+    case 'autorizacion':
+      return snMark(
+        alumno.autorizacionControlEscolar === 'Si',
+        alumno.autorizacionControlEscolar === 'Si'
+          ? 'Autorizado CE'
+          : 'Sin autorización CE',
+        () =>
+          toggleSn(
+            'autorizacionControlEscolar',
+            alumno.autorizacionControlEscolar,
+          ),
+        { variant: 'tile', tileIcon: 'stamp', doneTone: 'blue' },
       )
     case 'validacion':
-      return (
-        <CellSelect
-          value={alumno.validacionArchivoFinal}
-          options={SN_OPTIONS}
-          tone={tone}
-          onChange={(validacionArchivoFinal) =>
-            patch({ validacionArchivoFinal: validacionArchivoFinal as SN })
-          }
-        />
+      return snMark(
+        alumno.validacionArchivoFinal === 'Si',
+        alumno.validacionArchivoFinal === 'Si'
+          ? 'Validado'
+          : 'Validación pendiente',
+        () =>
+          toggleSn('validacionArchivoFinal', alumno.validacionArchivoFinal),
+        { variant: 'tile', label: 'Listo' },
       )
-    case 'fechaArchivo':
-      return (
-        <CellInput
-          type="date"
-          value={alumno.fechaInclusionArchivoFinal}
-          onChange={(fechaInclusionArchivoFinal) =>
-            patch({ fechaInclusionArchivoFinal })
-          }
-          tone={tone}
-        />
-      )
-    case 'devolucionSn':
-      return (
-        <CellSelect
-          value={alumno.devolucionSolicitada}
-          options={SN_OPTIONS}
-          tone={tone}
-          onChange={(devolucionSolicitada) =>
-            patch({ devolucionSolicitada: devolucionSolicitada as SN })
-          }
-        />
-      )
-    case 'fechaDevolucion':
-      return (
-        <CellInput
-          type="date"
-          value={alumno.fechaDevolucion}
-          onChange={(fechaDevolucion) => patch({ fechaDevolucion })}
-          tone={tone}
-        />
-      )
-    case 'observaciones':
-      return (
-        <CellInput
-          warn={warnObs}
-          value={alumno.observaciones}
-          onChange={(observaciones) => patch({ observaciones })}
-          tone={tone}
-        />
-      )
+    default:
+      return <ReadCell>—</ReadCell>
   }
 }
 
@@ -550,23 +309,25 @@ type Props = {
 }
 
 export function AlumnosTable({ alumnos, onChange, canEditNivel }: Props) {
-  const [widths, setWidths] = useState<Record<ColumnId, number>>(loadWidths)
-  const [collapsed, setCollapsed] = useState<CollapsedMap>(loadCollapsed)
-  const [assignments, setAssignments] =
-    useState<Record<ColumnId, GroupId>>(loadAssignments)
-  const [assignOpen, setAssignOpen] = useState(false)
-  const [jumpTo, setJumpTo] = useState<GroupId | null>(null)
-  /** En pantallas angostas las columnas fijas comen demasiado ancho: se desactivan. */
+  const [fichaAlumno, setFichaAlumno] = useState<Alumno | null>(null)
+  const [containerW, setContainerW] = useState(1280)
   const [stickEnabled, setStickEnabled] = useState(
     () =>
       typeof window !== 'undefined'
         ? window.matchMedia('(min-width: 768px)').matches
         : true,
   )
-  const colRefs = useRef<Partial<Record<ColumnId, HTMLTableCellElement | null>>>(
-    {},
-  )
-  const scrollRef = useRef<HTMLDivElement | null>(null)
+  const wrapRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    const el = wrapRef.current
+    if (!el) return
+    const measure = () => setContainerW(el.clientWidth || 1280)
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 768px)')
@@ -576,41 +337,35 @@ export function AlumnosTable({ alumnos, onChange, canEditNivel }: Props) {
     return () => mq.removeEventListener('change', onChangeMq)
   }, [])
 
-  useEffect(() => {
-    localStorage.setItem(COL_WIDTHS_KEY, JSON.stringify(widths))
-  }, [widths])
-
-  useEffect(() => {
-    localStorage.setItem(COL_GROUPS_KEY, JSON.stringify(collapsed))
-  }, [collapsed])
-
-  useEffect(() => {
-    localStorage.setItem(COL_ASSIGN_KEY, JSON.stringify(assignments))
-  }, [assignments])
-
   const stickyIds = useMemo(
     () => (stickEnabled ? STICKY_COLUMN_IDS : ([] as ColumnId[])),
     [stickEnabled],
   )
 
   const visibleColumns = useMemo(() => {
-    const bySection = TABLE_COLUMNS.filter(
-      (col) => !collapsed[assignments[col.id]],
-    ).sort((a, b) => {
-      const groupDiff =
-        groupOrder(assignments[a.id]) - groupOrder(assignments[b.id])
-      if (groupDiff !== 0) return groupDiff
-      return (
-        TABLE_COLUMNS.findIndex((col) => col.id === a.id) -
-        TABLE_COLUMNS.findIndex((col) => col.id === b.id)
-      )
-    })
+    const bySection = TABLE_COLUMNS.filter((col) =>
+      TABLE_INLINE_COLUMN_IDS.includes(col.id),
+    ).sort(
+      (a, b) =>
+        TABLE_INLINE_COLUMN_IDS.indexOf(a.id) -
+        TABLE_INLINE_COLUMN_IDS.indexOf(b.id),
+    )
     const sticky = stickyIds
       .filter((id) => bySection.some((col) => col.id === id))
       .map((id) => TABLE_COLUMNS.find((col) => col.id === id)!)
     const rest = bySection.filter((col) => !stickyIds.includes(col.id))
     return [...sticky, ...rest]
-  }, [assignments, collapsed, stickyIds])
+  }, [stickyIds])
+
+  const visibleIds = useMemo(
+    () => visibleColumns.map((c) => c.id),
+    [visibleColumns],
+  )
+
+  const widthsPx = useMemo(
+    () => distributeWidths(visibleIds, DEFAULT_COL_WEIGHTS, containerW),
+    [visibleIds, containerW],
+  )
 
   const stickyLeft = useMemo(() => {
     const lefts: Partial<Record<ColumnId, number>> = {}
@@ -619,229 +374,165 @@ export function AlumnosTable({ alumnos, onChange, canEditNivel }: Props) {
     for (const id of stickyIds) {
       if (!visibleColumns.some((col) => col.id === id)) continue
       lefts[id] = acc
-      acc += widths[id]
+      acc += widthsPx[id] ?? 0
     }
     return lefts
-  }, [visibleColumns, widths, stickEnabled, stickyIds])
+  }, [visibleColumns, widthsPx, stickEnabled, stickyIds])
 
-  /** Ancho total de columnas fijas (folio + nombre).
-   *  STICKY_BAR_FINE_TUNE_PX: ajuste fino del hueco de la barra
-   *  (positivo = más ancho; negativo = menos). Útil si el espaciador
-   *  no alinea perfecto con el borde derecho de "nombre".
-   */
-  /** Ancho fijo (px) del botón chevron en cada sección. */
-  const SECTION_CHEVRON_PX = 34
-  const stickyWidth = useMemo(
-    () =>
-      stickyIds.reduce(
-        (sum, id) =>
-          visibleColumns.some((col) => col.id === id) ? sum + widths[id] : sum,
-        0,
-      ),
-    [visibleColumns, widths, stickyIds],
+  const sectionSpans = useMemo(
+    () => sectionSpansFor(visibleIds),
+    [visibleIds],
   )
 
-  const tableWidth = useMemo(
-    () => visibleColumns.reduce((sum, col) => sum + widths[col.id], 0),
-    [visibleColumns, widths],
-  )
+  const tableWidth = containerW
 
-  useEffect(() => {
-    if (!jumpTo) return
-    const scroller = scrollRef.current
-    // Primera columna de la sección que NO sea fija (folio/nombre).
-    const first = visibleColumns.find(
-      (col) =>
-        assignments[col.id] === jumpTo &&
-        !stickyIds.includes(col.id),
-    )
-    const cell = first ? colRefs.current[first.id] : null
-    if (scroller && cell) {
-      /**
-       * Salto horizontal a una sección:
-       * cell.offsetLeft = inicio de la columna en la tabla
-       * stickyWidth     = ancho de folio + nombre (fijas)
-       * STICKY_JUMP_FINE_TUNE_PX = ajuste fino extra (manual)
-       * Resultado: la sección queda justo a la derecha de las fijas.
-       */
-      const STICKY_JUMP_FINE_TUNE_PX = stickEnabled ? 40 : 0
-      const table = cell.closest('table')
-      const cellLeft = table
-        ? cell.offsetLeft
-        : cell.getBoundingClientRect().left -
-          scroller.getBoundingClientRect().left +
-          scroller.scrollLeft
-      scroller.scrollTo({
-        left: Math.max(0, cellLeft - stickyWidth - STICKY_JUMP_FINE_TUNE_PX),
-        behavior: 'smooth',
-      })
-    }
-    setJumpTo(null)
-  }, [jumpTo, assignments, visibleColumns, stickyWidth, stickyIds, stickEnabled])
-
-  const startResize = useCallback(
-    (id: ColumnId, event: ReactPointerEvent<HTMLButtonElement>) => {
-      event.preventDefault()
-      event.stopPropagation()
-      const originX = event.clientX
-      const originW = widths[id]
-      const onMove = (ev: PointerEvent) => {
-        setWidths((prev) => ({
-          ...prev,
-          [id]: Math.max(56, originW + ev.clientX - originX),
-        }))
-      }
-      const onUp = () => {
-        window.removeEventListener('pointermove', onMove)
-        window.removeEventListener('pointerup', onUp)
-      }
-      window.addEventListener('pointermove', onMove)
-      window.addEventListener('pointerup', onUp)
-    },
-    [widths],
-  )
-
-  function jumpToGroup(id: GroupId) {
-    if (collapsed[id]) {
-      setCollapsed((prev) => ({ ...prev, [id]: false }))
-    }
-    setJumpTo(id)
-  }
-
-  function toggleGroup(id: GroupId) {
-    setCollapsed((prev) => ({ ...prev, [id]: !prev[id] }))
-  }
-
-  function assignColumn(columnId: ColumnId, groupId: GroupId) {
-    setAssignments((prev) => ({ ...prev, [columnId]: groupId }))
-    setCollapsed((prev) => ({ ...prev, [groupId]: false }))
-  }
-
-  function stickyStyle(colId: ColumnId, isHeader: boolean) {
+  function stickyStyle(colId: ColumnId, isHeader: boolean, headerRow?: 1 | 2) {
     const left = stickyLeft[colId]
-    if (left === undefined) {
-      return isHeader ? { top: 0 } : undefined
+    if (isHeader) {
+      const top = headerRow === 2 ? 28 : 0
+      // Band con colSpan: solo sticky vertical
+      if (headerRow === 1) return { top }
+      if (left === undefined) return { top }
+      return { top, left }
     }
-    return isHeader ? { top: 0, left } : { left }
+    if (left === undefined) return undefined
+    return { left }
   }
 
-  function stickyClass(colId: ColumnId, isHeader: boolean) {
-    if (stickyLeft[colId] === undefined) {
-      return isHeader ? 'sticky top-0 z-20' : ''
+  function stickyClass(colId: ColumnId, isHeader: boolean, headerRow?: 1 | 2) {
+    if (!isHeader) {
+      if (stickyLeft[colId] === undefined) return ''
+      return 'sticky-col sticky z-10 shadow-[2px_0_0_0_var(--color-brand-border)]'
     }
-    return isHeader
-      ? 'sticky z-30 shadow-[2px_0_0_0_var(--color-brand-border)]'
-      : 'sticky-col sticky z-10 shadow-[2px_0_0_0_var(--color-brand-border)]'
+    if (headerRow === 1) return 'sticky z-40'
+    if (stickyLeft[colId] === undefined) return 'sticky z-30'
+    return 'sticky z-30 shadow-[2px_0_0_0_var(--color-brand-border)]'
+  }
+
+  function headTone(colId: ColumnId): string {
+    const g = COLUMN_GROUP_BY_ID[colId]
+    if (!g) return GROUP_STYLES.identidad.head
+    return GROUP_STYLES[g].head
+  }
+
+  function bandTone(groupId: GroupId): string {
+    return GROUP_STYLES[groupId].band
+  }
+
+  /** Más padding en el borde entre secciones (mantiene el color del th/td). */
+  function sectionPadClass(index: number, isHeader: boolean): string {
+    const col = visibleColumns[index]
+    if (!col) return isHeader ? 'px-1.5' : 'px-1'
+    const group = COLUMN_GROUP_BY_ID[col.id]
+    const prev = visibleColumns[index - 1]
+    const next = visibleColumns[index + 1]
+    const atGroupStart = Boolean(prev && COLUMN_GROUP_BY_ID[prev.id] !== group)
+    const atGroupEnd = Boolean(
+      !next || COLUMN_GROUP_BY_ID[next.id] !== group,
+    )
+    /** Pagos: sin pad de sección (columnas fijas 40px). Drive: pad en bordes. */
+    if (isPagoColumn(col.id)) {
+      return 'px-1'
+    }
+    if (isDriveColumn(col.id)) {
+      const padL = atGroupStart ? 'pl-10' : 'pl-1'
+      const padR = 'pr-1'
+      return `${padL} ${padR}`
+    }
+    const padL = atGroupStart
+      ? 'pl-10'
+      : isHeader
+        ? 'pl-1.5'
+        : 'pl-1'
+    const padR = atGroupEnd
+      ? 'pr-10'
+      : isHeader
+        ? 'pr-1.5'
+        : 'pr-1'
+    return `${padL} ${padR}`
+  }
+
+  function spanPadClass(spanIndex: number, groupId: GroupId): string {
+    const padL = spanIndex > 0 ? 'pl-10' : 'pl-1.5'
+    const padR = groupId === 'drive' ? 'pr-1.5' : 'pr-10'
+    return `${padL} ${padR}`
   }
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-brand-border bg-cell shadow-sm">
-      {/*
-        === BARRA DE SECCIONES (arriba de la tabla) ===
-        Móvil: scroll horizontal de secciones (tabla completa se mantiene).
-        md+: hueco alineado con columnas sticky + secciones flex.
-      */}
-      <div className="flex w-full shrink-0 items-stretch border-b border-brand-border bg-sec-bar text-sec-bar-text">
-        {stickEnabled && stickyWidth > 0 ? (
-          <div
-            className="hidden shrink-0 border-r border-white/15 md:block"
-            style={{ width: Math.max(0, stickyWidth) }}
-            aria-hidden
-          />
-        ) : null}
-
-        <div className="flex min-w-0 flex-1 items-stretch overflow-x-auto">
-          {COLUMN_GROUPS.map((group, index) => {
-            const isCollapsed = collapsed[group.id]
-            return (
-              <div
-                key={group.id}
-                className={`flex min-w-[7.5rem] shrink-0 items-stretch sm:min-w-0 sm:flex-1 ${
-                  index > 0 ? 'border-l border-white/15' : ''
-                } ${isCollapsed ? 'opacity-60' : ''}`}
-              >
-                <button
-                  type="button"
-                  onClick={() => jumpToGroup(group.id)}
-                  className="min-w-0 flex-1 truncate px-2.5 py-2 text-left text-[0.65rem] font-semibold tracking-[0.06em] uppercase hover:bg-white/10 sm:px-3 sm:py-2.5 sm:text-xs"
-                  title={`Ir a ${group.label}`}
-                >
-                  {group.label}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => toggleGroup(group.id)}
-                  style={{ width: SECTION_CHEVRON_PX }}
-                  className="flex shrink-0 items-center justify-center border-l border-white/15 hover:bg-white/10"
-                  aria-label={
-                    isCollapsed
-                      ? `Mostrar ${group.label}`
-                      : `Ocultar ${group.label}`
-                  }
-                  title={isCollapsed ? 'Desplegar' : 'Colapsar'}
-                >
-                  <FontAwesomeIcon
-                    icon={isCollapsed ? faChevronRight : faChevronDown}
-                    className="text-xs"
-                  />
-                </button>
-              </div>
-            )
-          })}
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setAssignOpen(true)}
-          className="inline-flex shrink-0 items-center gap-1.5 border-l border-white/15 bg-sec-bar px-2.5 text-xs font-semibold text-sec-bar-text hover:bg-white/10 sm:gap-2 sm:px-3.5 sm:text-sm"
-        >
-          <FontAwesomeIcon icon={faTableColumns} />
-          <span className="hidden sm:inline">Columnas</span>
-        </button>
-      </div>
-      <p className="shrink-0 border-b border-brand-border bg-brand-soft/60 px-3 py-1 text-[0.7rem] text-ink-muted md:hidden">
-        Deslice la tabla en horizontal y vertical para ver todas las columnas.
-      </p>
+    <div
+      ref={wrapRef}
+      className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-brand-border bg-cell shadow-sm"
+    >
       {alumnos.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center px-6 text-center text-ink-muted">
+        <div className="flex flex-1 items-center justify-center text-center text-ink-muted">
           No hay alumnos en este estado para el nivel seleccionado.
-        </div>
-      ) : visibleColumns.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center px-6 text-center text-ink-muted">
-          Todas las secciones están ocultas. Use el chevron para desplegarlas.
         </div>
       ) : (
         <div
-          ref={scrollRef}
-          className="table-scroll min-h-0 flex-1 overflow-x-auto overflow-y-auto overscroll-contain"
+          className="table-scroll min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto overscroll-contain"
         >
           <table
-            className="border-collapse text-left"
-            style={{ width: tableWidth, minWidth: tableWidth, tableLayout: 'fixed' }}
+            className="w-full border-collapse"
+            style={{
+              width: tableWidth,
+              minWidth: tableWidth,
+              tableLayout: 'fixed',
+            }}
           >
             <colgroup>
               {visibleColumns.map((col) => (
-                <col key={col.id} style={{ width: widths[col.id] }} />
+                <col key={col.id} style={{ width: widthsPx[col.id] }} />
               ))}
             </colgroup>
             <thead>
               <tr>
-                {visibleColumns.map((col) => (
+                {sectionSpans.map((span, spanIndex) => {
+                  const firstId = span.columnIds[0]!
+                  const driveLink =
+                    span.groupId === 'drive' ? DRIVE_PROGRAMA_URL : null
+                  return (
+                    <th
+                      key={span.groupId}
+                      colSpan={span.columnIds.length}
+                      style={stickyStyle(firstId, true, 1)}
+                      className={`border-b border-brand-border py-1.5 text-center text-[0.65rem] font-bold tracking-[0.14em] uppercase ${bandTone(span.groupId)} ${spanPadClass(spanIndex, span.groupId)} ${stickyClass(firstId, true, 1)}`}
+                    >
+                      <span className="inline-flex items-center justify-center gap-1.5">
+                        {span.label}
+                        {driveLink ? (
+                          <a
+                            href={driveLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Abrir carpeta Drive"
+                            aria-label="Abrir carpeta Drive en nueva pestaña"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex size-5 items-center justify-center rounded text-white hover:bg-white/15"
+                          >
+                            <FontAwesomeIcon
+                              icon={faArrowUpRightFromSquare}
+                              className="text-[0.7rem]"
+                            />
+                          </a>
+                        ) : null}
+                      </span>
+                    </th>
+                  )
+                })}
+              </tr>
+              <tr>
+                {visibleColumns.map((col, index) => (
                   <th
                     key={col.id}
-                    ref={(el) => {
-                      colRefs.current[col.id] = el
-                    }}
-                    style={stickyStyle(col.id, true)}
-                    className={`relative border-b border-brand-border px-2.5 py-1.5 text-left text-xs font-semibold tracking-[0.04em] text-ink uppercase ${GROUP_STYLES[assignments[col.id]].head} ${stickyClass(col.id, true)}`}
+                    title={col.label}
+                    style={stickyStyle(col.id, true, 2)}
+                    className={`border-b border-brand-border py-1.5 text-center text-[0.65rem] font-semibold tracking-[0.03em] uppercase ${headTone(col.id)} ${sectionPadClass(index, true)} ${stickyClass(col.id, true, 2)}`}
                   >
-                    <span className="pr-2">{col.label}</span>
-                    <button
-                      type="button"
-                      aria-label={`Redimensionar columna ${col.label}`}
-                      onPointerDown={(e) => startResize(col.id, e)}
-                      className="absolute top-0 right-0 h-full w-2 cursor-col-resize touch-none hover:bg-brand-accent/40"
-                    />
+                    <span className="block leading-tight">
+                      {PAGO_SUBTITLE_USD[col.id] != null
+                        ? `$${PAGO_SUBTITLE_USD[col.id]}`
+                        : col.shortLabel}
+                    </span>
                   </th>
                 ))}
               </tr>
@@ -849,17 +540,18 @@ export function AlumnosTable({ alumnos, onChange, canEditNivel }: Props) {
             <tbody>
               {alumnos.map((alumno) => (
                 <tr key={alumno.id} className="border-b border-brand-border">
-                  {visibleColumns.map((col) => (
+                  {visibleColumns.map((col, index) => (
                     <td
                       key={col.id}
                       style={stickyStyle(col.id, false)}
-                      className={`border-b border-brand-border px-2 py-1.5 ${cellTone(alumno.estado, assignments[col.id])} ${stickyClass(col.id, false)}`}
+                      className={`border-b border-brand-border py-1 text-center ${cellTone(alumno.estado, COLUMN_GROUP_BY_ID[col.id])} ${sectionPadClass(index, false)} ${stickyClass(col.id, false)}`}
                     >
                       <AlumnoCell
                         colId={col.id}
                         alumno={alumno}
                         onChange={onChange}
                         editable={canEditNivel(alumno.nivel)}
+                        onOpenFicha={() => setFichaAlumno(alumno)}
                       />
                     </td>
                   ))}
@@ -869,11 +561,14 @@ export function AlumnosTable({ alumnos, onChange, canEditNivel }: Props) {
           </table>
         </div>
       )}
-      <ColumnAssignModal
-        open={assignOpen}
-        assignments={assignments}
-        onAssign={assignColumn}
-        onClose={() => setAssignOpen(false)}
+      <AlumnoFichaModal
+        open={Boolean(fichaAlumno)}
+        alumno={
+          fichaAlumno
+            ? (alumnos.find((a) => a.id === fichaAlumno.id) ?? fichaAlumno)
+            : null
+        }
+        onClose={() => setFichaAlumno(null)}
       />
     </div>
   )

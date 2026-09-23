@@ -18,8 +18,6 @@ export function Dashboard() {
     clearError,
     updateAlumno,
     syncFromPagos,
-    resetSeed,
-    addAlumnoPrueba,
   } = useAlumnos()
   const { session, logout, canEdit, isAdmin } = useAuth()
   const { pushToast } = useToast()
@@ -27,8 +25,8 @@ export function Dashboard() {
     session?.nivelEditable ?? 'Todos',
   )
   const [chip, setChip] = useState<ChipFiltro>('todos')
+  const [search, setSearch] = useState('')
   const [infoOpen, setInfoOpen] = useState(false)
-  const [pruebaBusy, setPruebaBusy] = useState(false)
 
   useEffect(() => {
     if (session?.nivelEditable) setNivel(session.nivelEditable)
@@ -43,8 +41,8 @@ export function Dashboard() {
   const metrics = useMemo(() => kpis(alumnos, nivel), [alumnos, nivel])
   const counts = useMemo(() => chipCounts(alumnos, nivel), [alumnos, nivel])
   const visible = useMemo(
-    () => filterAlumnos(alumnos, nivel, chip),
-    [alumnos, nivel, chip],
+    () => filterAlumnos(alumnos, nivel, chip, search),
+    [alumnos, nivel, chip, search],
   )
 
   const hintSoloLectura =
@@ -63,87 +61,6 @@ export function Dashboard() {
         session={session!}
         onLogout={logout}
         canSync={isAdmin}
-        onPrueba={
-          isAdmin
-            ? () => {
-                void (async () => {
-                  setPruebaBusy(true)
-                  try {
-                    const nivelPrueba: Nivel =
-                      nivel === 'Todos' ? 'Primaria' : nivel
-                    const alumno = addAlumnoPrueba(nivelPrueba)
-                    setChip('todos')
-                    pushToast(
-                      `Alumno prueba en tabla (${alumno.folio}) — no guardado en BD.`,
-                      'success',
-                    )
-
-                    const { enviarCartaBienvenidaPorCorreo } = await import(
-                      '../lib/enviarCartaBienvenidaMail'
-                    )
-                    const carta = await enviarCartaBienvenidaPorCorreo(alumno)
-                    if (carta.ok) {
-                      updateAlumno(alumno.id, {
-                        fechaCorreoBienvenida: new Date()
-                          .toISOString()
-                          .slice(0, 10),
-                      })
-                      pushToast(
-                        `Carta CE enviada a ${carta.to ?? 'prueba'}.`,
-                        'success',
-                      )
-                    } else {
-                      pushToast(
-                        `Carta: ${carta.error ?? 'falló el envío'}`,
-                        'error',
-                      )
-                    }
-
-                    const alertaRes = await fetch('/api/enviar-alerta-prueba', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        alumnoNombre: alumno.nombreCompleto,
-                        folio: alumno.folio,
-                        nivel: alumno.nivel,
-                        parcialidad: 2,
-                        diasAntes: 10,
-                      }),
-                    })
-                    const alertaText = await alertaRes.text()
-                    let alerta: { ok?: boolean; error?: string; to?: string } =
-                      {}
-                    try {
-                      alerta = JSON.parse(alertaText) as typeof alerta
-                    } catch {
-                      alerta = {
-                        error: alertaText.slice(0, 180) || `HTTP ${alertaRes.status}`,
-                      }
-                    }
-                    if (alertaRes.ok && alerta.ok) {
-                      pushToast(
-                        `Aviso (avisos_no-replay) → ${alerta.to ?? 'prueba'}.`,
-                        'success',
-                      )
-                    } else {
-                      pushToast(
-                        `Aviso: ${alerta.error ?? `HTTP ${alertaRes.status}`}`,
-                        'error',
-                      )
-                    }
-                  } catch (e) {
-                    pushToast(
-                      e instanceof Error ? e.message : 'Error en prueba',
-                      'error',
-                    )
-                  } finally {
-                    setPruebaBusy(false)
-                  }
-                })()
-              }
-            : undefined
-        }
-        pruebaBusy={pruebaBusy}
         onSync={() => {
           void (async () => {
             const result = await syncFromPagos()
@@ -163,7 +80,7 @@ export function Dashboard() {
                 )
                 if (envio.ok > 0) {
                   pushToast(
-                    `Cartas enviadas (prueba → sistemas.desarrollo): ${envio.ok}.`,
+                    `Cartas de bienvenida enviadas: ${envio.ok}.`,
                     'success',
                   )
                   const hoy = new Date().toISOString().slice(0, 10)
@@ -201,6 +118,8 @@ export function Dashboard() {
         <StatusChips
           chip={chip}
           onChip={setChip}
+          search={search}
+          onSearch={setSearch}
           data={metrics}
           showing={
             loading
@@ -217,8 +136,6 @@ export function Dashboard() {
       <InstructionsModal
         open={infoOpen}
         onClose={() => setInfoOpen(false)}
-        onReset={resetSeed}
-        canReset={isAdmin}
       />
     </div>
   )

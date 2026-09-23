@@ -8,12 +8,6 @@ export const PAGO_1_USD = 100
 export const PAGO_2_USD = 125
 export const PAGO_3_USD = 125
 export const STORAGE_KEY = 'control-alumnos-v1'
-export const COL_WIDTHS_KEY = 'control-alumnos-col-widths-v1'
-export const COL_GROUPS_KEY = 'control-alumnos-col-groups-v1'
-export const COL_ASSIGN_KEY = 'control-alumnos-col-assign-v1'
-export const THEME_KEY = 'control-alumnos-theme-v1'
-
-export type ThemeMode = 'light' | 'dark'
 
 export const CHIP_LABELS = {
   todos: 'Todos',

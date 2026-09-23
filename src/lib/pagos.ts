@@ -90,10 +90,25 @@ export function filterAlumnos(
   alumnos: Alumno[],
   nivel: Nivel | 'Todos',
   chip: ChipFiltro,
+  search = '',
 ): Alumno[] {
+  const q = search.trim().toLowerCase()
   return alumnos.filter((alumno) => {
     if (nivel !== 'Todos' && alumno.nivel !== nivel) return false
-    return matchesChip(alumno, chip)
+    if (!matchesChip(alumno, chip)) return false
+    if (!q) return true
+    const haystack = [
+      alumno.folio,
+      alumno.alumnoRef,
+      alumno.nombreCompleto,
+      alumno.curp,
+      alumno.correoTutor,
+      alumno.grado,
+      alumno.estado,
+    ]
+      .join(' ')
+      .toLowerCase()
+    return haystack.includes(q)
   })
 }
 

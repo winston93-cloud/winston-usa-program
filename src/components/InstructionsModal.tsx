@@ -1,24 +1,13 @@
 import { useEffect } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import {
-  faCircleInfo,
-  faRotateLeft,
-  faXmark,
-} from '@fortawesome/free-solid-svg-icons'
+import { faCircleInfo, faXmark } from '@fortawesome/free-solid-svg-icons'
 
 type Props = {
   open: boolean
   onClose: () => void
-  onReset: () => void
-  canReset?: boolean
 }
 
-export function InstructionsModal({
-  open,
-  onClose,
-  onReset,
-  canReset = true,
-}: Props) {
+export function InstructionsModal({ open, onClose }: Props) {
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
@@ -40,16 +29,16 @@ export function InstructionsModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="instrucciones-titulo"
-        className="max-h-[min(90dvh,36rem)] w-full max-w-lg overflow-y-auto rounded-xl border border-brand-border bg-cell p-4 shadow-xl sm:p-6"
+        className="max-h-[min(90dvh,40rem)] w-full max-w-lg overflow-y-auto rounded-xl border border-brand-border bg-cell p-4 shadow-xl sm:p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-3">
           <h2
             id="instrucciones-titulo"
-            className="font-display inline-flex items-center gap-2 text-xl font-semibold text-brand-on-surface"
+            className="font-display inline-flex items-center gap-2 text-xl font-semibold text-white/90"
           >
             <FontAwesomeIcon icon={faCircleInfo} />
-            Instrucciones de captura
+            Cómo usar el panel
           </h2>
           <button
             type="button"
@@ -60,46 +49,91 @@ export function InstructionsModal({
             <FontAwesomeIcon icon={faXmark} className="text-lg" />
           </button>
         </div>
-        <ul className="list-disc space-y-2.5 pl-5 text-[0.95rem] leading-relaxed text-ink">
-          <li>
-            Capture el <strong>Ref</strong> (<code>alumno_ref</code>) para enlazar
-            <code>alumno_id</code>: nombre, nivel, grado, CURP, etc. se leen en vivo
-            desde la ficha Winston (no se editan aquí).
-          </li>
-          <li>
-            Complete las celdas blancas restantes. El total y el saldo se calculan
-            automáticamente en dólares.
-          </li>
-          <li>Los pagos se registran únicamente mediante su fecha.</li>
-          <li>
-            Si dos parcialidades se pagan juntas, registre la misma fecha en
-            ambas columnas.
-          </li>
-          <li>
-            Para una baja, seleccione <strong>Baja - gestionar devolución</strong>
-            ; la fila se marcará en rojo y deberá explicarse el caso en
-            Observaciones.
-          </li>
-          <li>
-            Arrastre el borde derecho de cada encabezado de columna para
-            cambiar su ancho.
-          </li>
-          <li>
-            Los títulos de grupo (Identidad, Pagos, etc.) siempre están visibles:
-            el nombre lleva a esa sección; el icono de chevron la oculta o
-            muestra.
-          </li>
-        </ul>
-        {canReset ? (
-          <button
-            type="button"
-            onClick={onReset}
-            className="mt-5 inline-flex items-center gap-2 rounded-lg border border-brand-border px-4 py-2 text-[0.95rem] font-semibold text-brand-on-surface hover:bg-brand-soft"
-          >
-            <FontAwesomeIcon icon={faRotateLeft} />
-            Vaciar registros del programa
-          </button>
-        ) : null}
+
+        <div className="space-y-5 text-[0.95rem] leading-relaxed text-ink">
+          <section>
+            <h3 className="mb-2 text-xs font-semibold tracking-[0.12em] text-ink-muted uppercase">
+              Flujo
+            </h3>
+            <ol className="list-decimal space-y-2 pl-5">
+              <li>
+                La tabla es un <strong>checklist operativo</strong>: secciones
+                Alumno → Pagos → Drive → Cierre. Sirve para ver el avance de un
+                vistazo.
+              </li>
+              <li>
+                Use el botón de <strong>sincronizar</strong> (header) para traer
+                alumnos y fechas de pago desde Winston. Con el 1.er pago nuevo se
+                prepara el envío de la carta de bienvenida al tutor.
+              </li>
+              <li>
+                Abra la <strong>Ficha</strong> para consultar datos completos
+                (identidad, totales, expediente, devoluciones). La ficha es de
+                consulta; la captura operativa vive en la tabla.
+              </li>
+              <li>
+                Marque a mano Drive, Autorización CE y Validación final cuando
+                cada paso esté hecho. Cambie el <strong>Estado</strong> si hay
+                baja o reembolso.
+              </li>
+            </ol>
+          </section>
+
+          <section>
+            <h3 className="mb-2 text-xs font-semibold tracking-[0.12em] text-ink-muted uppercase">
+              Automático
+            </h3>
+            <ul className="list-disc space-y-2 pl-5">
+              <li>
+                <strong>Alta / pagos:</strong> folio, alumno y fechas de pago
+                (USD $100 / $125 / $125) llegan con la sincronización desde
+                Winston. No se capturan fechas a mano en la tabla.
+              </li>
+              <li>
+                <strong>Identidad:</strong> nombre, nivel, grado, CURP, correo
+                tutor, etc. se leen en vivo desde la ficha Winston (no se
+                editan aquí).
+              </li>
+              <li>
+                <strong>Cálculos:</strong> total pagado, saldo, estatus de pago
+                y etiqueta de expediente se derivan solos.
+              </li>
+              <li>
+                <strong>Carta de bienvenida:</strong> tras sincronizar, si hay
+                1.er pago nuevo se envía el correo al tutor (contenido de
+                producción).
+              </li>
+              <li>
+                <strong>Filtros y chips:</strong> cuentan y filtran según estado
+                y pagos ya registrados.
+              </li>
+            </ul>
+          </section>
+
+          <section>
+            <h3 className="mb-2 text-xs font-semibold tracking-[0.12em] text-ink-muted uppercase">
+              Manual
+            </h3>
+            <ul className="list-disc space-y-2 pl-5">
+              <li>
+                <strong>Estado</strong> del alumno (Activo / Baja / Reembolso).
+                En baja, documente el caso en Observaciones (ficha).
+              </li>
+              <li>
+                <strong>Drive:</strong> Carpeta, CURP y Boletas (marque cuando
+                estén en Drive).
+              </li>
+              <li>
+                <strong>Cierre:</strong> Autorización CE y Validación final
+                (marque cuando Control Escolar y el archivo estén listos).
+              </li>
+              <li>
+                Ancho de columnas: arrastre el borde derecho del encabezado si
+                necesita más espacio.
+              </li>
+            </ul>
+          </section>
+        </div>
       </div>
     </div>
   )

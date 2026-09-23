@@ -8,7 +8,9 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "cartas": "tsx scripts/generate-cartas.ts"
+    "cartas": "tsx scripts/generate-cartas.ts",
+    "correos:prueba": "tsx scripts/probar-correos.ts prueba",
+    "correos:padre": "tsx scripts/probar-correos.ts padre"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.3.1",

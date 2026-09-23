@@ -46,7 +46,6 @@ type StoreValue = {
   /** Enlaza alumno_id por alumno_ref; identidad se lee de public.alumno. */
   applyAlumnoRef: (id: string, alumnoRef: string) => Promise<void>
   syncFromPagos: () => Promise<SyncPagosResult | null>
-  resetSeed: () => void
   /** Fila local de prueba (no InsForge). */
   addAlumnoPrueba: (nivel: Nivel) => Alumno
 }
@@ -229,23 +228,6 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
     }
   }, [alumnos])
 
-  const resetSeed = useCallback(() => {
-    void (async () => {
-      setLoading(true)
-      const { error: delErr } = await insforge.database
-        .from(TABLE)
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000')
-      if (delErr) {
-        setError(delErr.message ?? 'Error al limpiar')
-        setLoading(false)
-        return
-      }
-      setError(null)
-      await refresh()
-    })()
-  }, [refresh])
-
   const value = useMemo(
     () => ({
       alumnos,
@@ -256,7 +238,6 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
       updateAlumno,
       applyAlumnoRef,
       syncFromPagos,
-      resetSeed,
       addAlumnoPrueba,
     }),
     [
@@ -268,7 +249,6 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
       updateAlumno,
       applyAlumnoRef,
       syncFromPagos,
-      resetSeed,
       addAlumnoPrueba,
     ],
   )

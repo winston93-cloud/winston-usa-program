@@ -1,8 +1,6 @@
 import type { Nivel } from './nivel.js'
 
-/**
- * Correos de Control Escolar (InsForge `public.usuario`, cuentas activas).
- */
+/** Direcciones CE — notificación / Reply-To (sin SMTP). */
 export const CORREO_CONTROL_ESCOLAR_POR_NIVEL: Record<Nivel, string> = {
   Kinder: 'controlescolariew@winston93.edu.mx',
   Primaria: 'controlescolar.primaria@winston93.edu.mx',

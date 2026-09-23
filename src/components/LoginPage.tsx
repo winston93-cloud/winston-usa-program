@@ -268,7 +268,7 @@ export function LoginPage() {
           <button
             type="submit"
             disabled={busy}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-on-brand hover:opacity-95 disabled:opacity-60"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-sec-white-head px-4 py-2.5 text-sm font-semibold text-on-brand hover:opacity-95 disabled:opacity-60"
           >
             <FontAwesomeIcon icon={faRightToBracket} />
             {busy ? 'Entrando…' : 'Entrar'}

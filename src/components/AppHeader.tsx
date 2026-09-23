@@ -1,7 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faCircleInfo,
-  faFlask,
   faRightFromBracket,
   faRotate,
 } from '@fortawesome/free-solid-svg-icons'
@@ -18,9 +17,6 @@ type Props = {
   session: UsaSession
   onLogout: () => void
   canSync?: boolean
-  /** Solo admin: fila local + carta + aviso de prueba. */
-  onPrueba?: () => void
-  pruebaBusy?: boolean
 }
 
 export function AppHeader({
@@ -32,19 +28,17 @@ export function AppHeader({
   session,
   onLogout,
   canSync = true,
-  onPrueba,
-  pruebaBusy = false,
 }: Props) {
   const nombreCorto = shortSessionName(session)
 
   return (
-    <header className="shrink-0 border-b border-brand/20 bg-brand text-on-brand">
+    <header className="shrink-0 border-b border-brand-border bg-brand text-on-brand">
       <div className="mx-auto flex w-full flex-wrap items-center justify-between gap-3 px-3 py-3 sm:gap-4 sm:px-5 sm:py-4">
         <div className="min-w-0 flex-1">
-          <h1 className="font-display text-[1.15rem] leading-tight font-bold tracking-tight sm:text-[1.65rem] lg:text-[1.85rem]">
+          <h1 className="font-display text-xl leading-tight font-bold tracking-tight">
             PROGRAMA WINSTON–HÖKKU ACADEMY
           </h1>
-          <p className="mt-0.5 text-[0.7rem] font-semibold tracking-[0.14em] text-on-brand/80 uppercase sm:mt-1 sm:text-sm sm:tracking-[0.18em]">
+          <p className="mt-0.5 text-[0.7rem] font-semibold tracking-[0.14em] text-on-brand-muted uppercase sm:mt-1 sm:text-sm sm:tracking-[0.18em]">
             Ciclo escolar {CICLO_ESCOLAR}
           </p>
         </div>
@@ -83,22 +77,6 @@ export function AppHeader({
                 icon={faRotate}
                 className={`text-base ${syncing ? 'animate-spin' : ''}`}
               />
-            </button>
-          ) : null}
-
-          {onPrueba ? (
-            <button
-              type="button"
-              onClick={onPrueba}
-              disabled={pruebaBusy || syncing}
-              title="Prueba: alumno local + carta CE + aviso avisos_no-replay"
-              aria-label="Ejecutar prueba de correo"
-              className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/20 px-2.5 py-2 text-sm font-semibold text-amber-100 hover:bg-amber-400/30 disabled:cursor-wait disabled:opacity-60 sm:px-3.5 sm:py-2.5"
-            >
-              <FontAwesomeIcon icon={faFlask} />
-              <span className="hidden sm:inline">
-                {pruebaBusy ? 'Probando…' : 'Prueba'}
-              </span>
             </button>
           ) : null}
 

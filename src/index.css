@@ -2,41 +2,49 @@
 
 /*
   =============================================================================
-  COLORES
+  COLORES — marina (azul casi negro, solidificada)
   =============================================================================
-  AZULES — edita solo los --tone-* (tabla incluida como tonos principales).
-  Alias azules → apuntan a un --tone-* (claros con claros, etc.).
+  Jerarquía (poco contraste, pero legible):
+    soft     → fondo de página (más oscuro)
+    brand    → header / chrome
+    cell     → cuerpo de tabla (filas)
+    *head    → sub-header de tabla (doble fila)
+    deep     → band de secciones / hover
+    accent   → foco
+    border   → bordes sutiles
 
-  NO AZULES — conservan su hex propio (estados, chips, alerta, ink).
-
-  Tonos azules principales:
-    deep           hover / más oscuro
-    brand          principal (header, botones)
-    bar            barra de secciones de la tabla
-    accent         foco / acento
-    border         bordes
-    soft           fondo de página
-    sec-blue       franja azul de columnas
-    sec-blue-head  cabeza de franja azul
-    sec-white-head cabeza de franja blanca
-    tint           tinte muy claro
-    white          blanco puro
+  Para “un poco más azul”: sube saturación en --tone-brand, --tone-cell y
+  --tone-soft (misma luminosidad, más azul). No mezcles grises neutros.
   =============================================================================
 */
 
 :root {
-  /* —— Azules principales (fuente de verdad) —— */
-  --tone-deep: #0b3a63;
-  --tone-brand: #0f4c81;
-  --tone-bar: #2f6fad;
-  --tone-accent: #1d6fb8;
-  --tone-border: #b9d4ee;
-  --tone-soft: #e8f1fb;
-  --tone-sec-blue: #e9efff;
-  --tone-sec-blue-head: #d9ebff;
-  --tone-sec-white-head: #f8fbff;
-  --tone-tint: #f3f8fd;
-  --tone-white: #ffffff;
+  /* —— Azules marina —— */
+  --tone-soft: #060f1b; /* página */
+  --tone-deep: #13263a; /* band / hover */
+  --tone-brand: #16263b; /* header */
+  --tone-accent: #141f2e; /* foco */
+  --tone-border: #1e3a52; /* bordes */
+  --tone-cell: #132231; /* filas tabla */
+  --tone-sec-white: #132231;
+  --tone-sec-blue: #132231;
+  --tone-sec-bar-muted: #132231;
+  --tone-sec-white-head: #182f42; /* sub-header */
+  --tone-sec-blue-head: #182f42;
+  --tone-tint: #0c1c2c;
+  --tone-white: #182f42;
+  --tone-ink: #dce6f0;
+  --tone-ink-muted: #8fa3b8;
+  --tone-select-bg: #0c1c2c;
+
+  /* —— Marcas tabla —— */
+  --tone-mark-green: #107546;
+  --tone-mark-blue: #03407a;
+  --tone-mark-red: #ef4444;
+  --tone-mark-gray: #191d27;
+  --tone-mark-pending-bg: rgba(255, 255, 255, 0.04);
+  --tone-mark-pending-fg: rgba(255, 255, 255, 0.12);
+  --tone-mark-on: #ffffff;
 }
 
 @theme {
@@ -44,71 +52,78 @@
   --font-sans: 'Figtree', 'Segoe UI', system-ui, sans-serif;
   --font-display: 'Sora', 'Figtree', system-ui, sans-serif;
 
-  /* ========== MARCA (alias → tonos azules) ========== */
+  /* ========== MARCA ========== */
   --color-brand: var(--tone-brand);
   --color-brand-hover: var(--tone-deep);
   --color-brand-accent: var(--tone-accent);
   --color-brand-soft: var(--tone-soft);
-  --color-brand-muted: var(--tone-soft); /* claro → soft */
+  --color-brand-muted: var(--tone-soft);
   --color-brand-border: var(--tone-border);
   --color-brand-tint: var(--tone-tint);
-  --color-brand-on-surface: var(--tone-brand); /* = brand */
+  --color-brand-on-surface: var(--tone-brand);
 
   /* ========== TEXTO ========== */
-  --color-ink: #1e293b;
-  --color-ink-muted: #64748b;
+  --color-ink: var(--tone-ink);
+  --color-ink-muted: var(--tone-ink-muted);
   --color-on-brand: #ffffff;
-  --color-on-brand-muted: var(--tone-border); /* claro sobre brand → border */
+  --color-on-brand-muted: rgba(255, 255, 255, 0.72);
 
   /* ========== CELDAS ========== */
-  --color-cell: var(--tone-white);
-  --color-cell-calc: var(--tone-tint); /* claro → tint */
+  --color-cell: var(--tone-cell);
+  --color-cell-calc: var(--tone-tint);
 
-  /* ========== SELECT OPTIONS (lista; siempre azul) ========== */
-  --color-select-option-bg: var(--tone-soft);
-  --color-select-option-text: var(--tone-brand);
+  /* ========== SELECT OPTIONS ========== */
+  --color-select-option-bg: var(--tone-select-bg);
+  --color-select-option-text: var(--tone-ink);
 
-  /* ========== BAJA / ALERTA (no azul — hex propio) ========== */
-  --color-baja: #fef2f2;
-  --color-baja-border: #fca5a5;
-  --color-baja-text: #b91c1c;
+  /* ========== BAJA / ALERTA ========== */
+  --color-baja: #35282c;
+  --color-baja-border: #a08088;
+  --color-baja-text: #c49aa2;
 
-  /* ========== ESTADO (no azul — hex propio) ========== */
+  /* ========== ESTADO ========== */
   --color-estado-activo-cell: transparent;
-  --color-estado-activo-input: #e8f0ec;
-  --color-estado-activo-border: #c5d4cc;
-  --color-estado-activo-text: #3d6b58;
+  --color-estado-activo-input: #0d7054;
+  --color-estado-activo-border: #5f8f7a;
+  --color-estado-activo-text: #8fbca8;
 
   --color-estado-baja-cell: transparent;
-  --color-estado-baja-input: #f3ecec;
-  --color-estado-baja-border: #ddc8cb;
-  --color-estado-baja-text: #8a4550;
+  --color-estado-baja-input: #5f2436;
+  --color-estado-baja-border: #a08088;
+  --color-estado-baja-text: #c49aa2;
 
   --color-estado-reembolso-cell: transparent;
-  --color-estado-reembolso-input: #eef0f2;
-  --color-estado-reembolso-border: #d0d6dc;
-  --color-estado-reembolso-text: #64748b;
+  --color-estado-reembolso-input: #1a2834;
+  --color-estado-reembolso-border: #6a8090;
+  --color-estado-reembolso-text: #9aadb8;
 
   /* ========== CHIPS ========== */
-  /* Azules → tonos; el resto conserva hex */
   --color-chip-base: var(--tone-brand);
   --color-chip-activos: var(--color-estado-activo-input);
   --color-chip-devoluciones: var(--color-estado-baja-input);
-  --color-chip-recaudado: #047857;
-  --color-chip-saldo: #c2410c;
+  --color-chip-recaudado: #2d7a58;
+  --color-chip-saldo: #a86a3c;
+  --color-chip-saldo-soft: #35282c;
   --color-text-activos: #059669;
   --color-text-devoluciones: #c11d48;
 
-  /* --color-chip-saldo-soft: #000000; */
-
-  /* ========== FRANJAS DE TABLA (tonos principales) ========== */
-  --color-sec-white: var(--tone-white);
+  /* ========== FRANJAS DE TABLA ========== */
+  --color-sec-white: var(--tone-sec-white);
   --color-sec-white-head: var(--tone-sec-white-head);
   --color-sec-blue: var(--tone-sec-blue);
   --color-sec-blue-head: var(--tone-sec-blue-head);
-  --color-sec-bar: var(--tone-brand);
+  --color-sec-bar: var(--tone-deep);
   --color-sec-bar-text: #ffffff;
-  --color-sec-bar-muted: var(--tone-soft); /* claro → soft */
+  --color-sec-bar-muted: var(--tone-sec-bar-muted);
+
+  /* ========== MARCAS TABLA ========== */
+  --color-mark-green: var(--tone-mark-green);
+  --color-mark-blue: var(--tone-mark-blue);
+  --color-mark-red: var(--tone-mark-red);
+  --color-mark-gray: var(--tone-mark-gray);
+  --color-mark-pending-bg: var(--tone-mark-pending-bg);
+  --color-mark-pending-fg: var(--tone-mark-pending-fg);
+  --color-mark-on: var(--tone-mark-on);
 }
 
 * {
@@ -186,57 +201,6 @@ select option {
 
 input[type='date']::-webkit-calendar-picker-indicator {
   cursor: pointer;
-  opacity: 0.7;
-}
-
-/*
-  =============================================================================
-  MODO OSCURO — azules en --tone-*; no azules con hex propio (como antes)
-  =============================================================================
-*/
-[data-theme='dark'] {
-  --tone-deep: #060e18;
-  --tone-brand: #0f4c81;
-  /* --tone-bar: #2f6fad; */
-  --tone-accent: #2a6b96;
-  --tone-border: #3a5670;
-  --tone-soft: #0a1624;
-  --tone-sec-blue: #13273d;
-  --tone-sec-blue-head: #162e44;
-  --tone-sec-white-head: #1c3a58;
-  /* --tone-tint: #000000; */
-  --tone-white: #1a3855;
-
-  --color-ink: #e2eaf2;
-  --color-ink-muted: #8fa3b8;
-  --color-on-brand: #ffffff;
-  --color-cell: #172e44;
-  --color-cell-calc: #0e1e30;
-  --color-select-option-bg: #122436;
-  --color-select-option-text: #e2eaf2;
-
-  /* Alerta / estado / chips no azules — hex oscuros originales */
-  --color-baja: #35282c;
-  --color-baja-border: #a08088;
-  --color-baja-text: #c49aa2;
-
-  --color-estado-activo-input: #0d7054;
-  --color-estado-activo-border: #5f8f7a;
-  --color-estado-activo-text: #8fbca8;
-
-  --color-estado-baja-input: #5f2436;
-  --color-estado-baja-border: #a08088;
-  --color-estado-baja-text: #c49aa2;
-
-  --color-estado-reembolso-input: #1a2834;
-  --color-estado-reembolso-border: #6a8090;
-  --color-estado-reembolso-text: #9aadb8;
-  --color-chip-recaudado: #2d7a58;
-  --color-chip-saldo: #a86a3c;
-  --color-chip-saldo-soft: #35282c;
-}
-
-[data-theme='dark'] input[type='date']::-webkit-calendar-picker-indicator {
   filter: invert(0.85);
   opacity: 0.85;
 }

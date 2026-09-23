@@ -1,6 +1,8 @@
 /**
- * Cron diario: alertas de 2.º y 3.er pago (10, 5 y 0 días antes del vencimiento).
- * Remitente: avisos_no-replay. Destino prueba: CARTA_EMAIL_TO_PRUEBA.
+ * Cron diario: alertas de 2.º y 3.er pago (10, 5 y 0 días).
+ * Remitente: avisos_no-replay. No se notifica a Control Escolar.
+ * Pruebas: CARTA_EMAIL_TO_PRUEBA (sistemas).
+ * Producción: masivo a correos de padres (correoTutor / familia).
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@insforge/sdk'

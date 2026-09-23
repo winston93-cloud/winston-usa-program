@@ -1,11 +1,23 @@
 /**
- * Envía pruebas SMTP locales (mismas cuentas que Vercel).
- * Uso: npx vercel env pull .env.vercel --environment production -y
- *      npx tsx scripts/probar-correos.ts
+ * Rutina para revisar correos (avisos_no-replay).
+ *
+ *   npx tsx scripts/probar-correos.ts prueba
+ *     → Solo valida SMTP (mensaje corto a sistemas).
+ *
+ *   npx tsx scripts/probar-correos.ts padre
+ *     → Contenido exacto de la carta a padres (HTML producción),
+ *       enviado a CARTA_EMAIL_TO_PRUEBA para revisión segura.
+ *
+ * Requiere MAIL_PASS (p. ej. tras `npx vercel env pull .env.vercel ...`).
  */
 import { readFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import nodemailer from 'nodemailer'
+import {
+  htmlCartaFamilia,
+  htmlPruebaSmtp,
+} from '../api/_lib/cartaBienvenidaHtml.ts'
+import { correoCePorNivel } from '../api/_lib/mailSmtp.ts'
 
 function loadEnvFile(path: string) {
   if (!existsSync(path)) return
@@ -30,99 +42,67 @@ loadEnvFile(resolve(process.cwd(), '.env.vercel'))
 loadEnvFile(resolve(process.cwd(), '.env.local'))
 loadEnvFile(resolve(process.cwd(), '.env'))
 
-function pass(raw?: string) {
-  return String(raw ?? '')
-    .trim()
-    .replace(/\s+/g, '')
-}
-
 const to =
   process.env.CARTA_EMAIL_TO_PRUEBA?.trim().toLowerCase() ||
   'sistemas.desarrollo@winston93.edu.mx'
+const user = (
+  process.env.MAIL_USER || 'avisos_no-replay@winston93.edu.mx'
+).trim()
+const pass = String(process.env.MAIL_PASS ?? '')
+  .trim()
+  .replace(/\s+/g, '')
 
-const cuentas = [
-  {
-    label: 'CE Kinder',
-    user:
-      process.env.MAIL_CE_KINDER_USER || 'controlescolariew@winston93.edu.mx',
-    pass: pass(process.env.MAIL_CE_KINDER_PASS),
-    carta: true as const,
-    nivel: 'Kinder',
-  },
-  {
-    label: 'CE Primaria',
-    user:
-      process.env.MAIL_CE_PRIMARIA_USER ||
-      'controlescolar.primaria@winston93.edu.mx',
-    pass: pass(process.env.MAIL_CE_PRIMARIA_PASS),
-    carta: true as const,
-    nivel: 'Primaria',
-  },
-  {
-    label: 'CE Secundaria',
-    user:
-      process.env.MAIL_CE_SECUNDARIA_USER ||
-      'controlescolar.secundaria@winston93.edu.mx',
-    pass: pass(process.env.MAIL_CE_SECUNDARIA_PASS),
-    carta: true as const,
-    nivel: 'Secundaria',
-  },
-  {
-    label: 'avisos_no-replay',
-    user: process.env.MAIL_USER || 'avisos_no-replay@winston93.edu.mx',
-    pass: pass(process.env.MAIL_PASS),
-    carta: false as const,
-    nivel: '',
-  },
-]
+type Modo = 'prueba' | 'padre'
+
+function parseModo(argv: string[]): Modo {
+  const arg = (argv[2] || '').toLowerCase()
+  if (arg === 'padre' || arg === 'familia' || arg === 'produccion') return 'padre'
+  return 'prueba'
+}
 
 async function main() {
-  console.log(`Destino: ${to}\n`)
-  for (const c of cuentas) {
-    if (!c.pass) {
-      console.log(`FAIL  ${c.label}: falta contraseña en env`)
-      continue
-    }
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: { user: c.user, pass: c.pass },
-    })
-    try {
-      const info = await transporter.sendMail({
-        from: `"Winston USA Program" <${c.user}>`,
-        to,
-        subject: `Prueba envío automático — Winston USA Program (${c.label})`,
-        text: `Prueba envío automático Winston USA Program.\nRemitente: ${c.user}\n`,
-        html: `<p><strong>Prueba envío automático Winston USA Program</strong></p>
-<p>Remitente: <code>${c.user}</code> (${c.label})</p>`,
-      })
-      console.log(`OK    smtp  ${c.label} → ${to}  ${info.messageId}`)
-    } catch (e) {
-      console.log(
-        `FAIL  smtp  ${c.label}: ${e instanceof Error ? e.message : e}`,
-      )
-      continue
-    }
-
-    if (c.carta) {
-      try {
-        const info = await transporter.sendMail({
-          from: `"Control Escolar ${c.nivel}" <${c.user}>`,
-          to,
-          replyTo: c.user,
-          subject: `Prueba carta bienvenida USA Program — ${c.nivel}`,
-          html: `<p><strong>Prueba envío automático Winston USA Program</strong></p>
-<p>Carta de bienvenida de prueba — nivel <strong>${c.nivel}</strong>.</p>
-<p>Remitente: ${c.user}</p>`,
-        })
-        console.log(`OK    carta ${c.label} → ${to}  ${info.messageId}`)
-      } catch (e) {
-        console.log(
-          `FAIL  carta ${c.label}: ${e instanceof Error ? e.message : e}`,
-        )
-      }
-    }
+  if (!pass) {
+    console.error('Falta MAIL_PASS')
+    process.exit(1)
   }
+
+  const modo = parseModo(process.argv)
+  console.log(`Modo: ${modo}\nFrom: ${user}\nTo: ${to}\n`)
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user, pass },
+  })
+
+  if (modo === 'prueba') {
+    const info = await transporter.sendMail({
+      from: `"Winston USA Program" <${user}>`,
+      to,
+      subject: '[PRUEBA] Envío SMTP — Winston USA Program',
+      html: htmlPruebaSmtp(user),
+    })
+    console.log('OK prueba SMTP', info.messageId)
+    return
+  }
+
+  const nivelLabel = 'Primaria'
+  const alumnoNombre = 'Alumno Ejemplo Revisión'
+  const folio = 'REV-000'
+  const replyTo = correoCePorNivel(nivelLabel)
+  const info = await transporter.sendMail({
+    from: `"Winston USA Program" <${user}>`,
+    to,
+    replyTo,
+    subject: `Carta de bienvenida USA Program — ${alumnoNombre}`,
+    html: htmlCartaFamilia({
+      nivelLabel,
+      alumnoNombre,
+      folio,
+      modo: 'padre',
+    }),
+  })
+  console.log('OK carta versión padre (revisión)', info.messageId)
+  console.log(`Reply-To: ${replyTo}`)
 }
 
 main().catch((e) => {

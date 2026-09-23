@@ -1,20 +1,27 @@
 /**
- * API: carta de bienvenida (1.er pago) enviada DESDE la cuenta de Control Escolar del nivel.
- * Destino de prueba: sistemas.desarrollo (CARTA_EMAIL_TO_PRUEBA).
+ * Carta de bienvenida (1.er pago).
+ * Remitente: avisos_no-replay. Reply-To: Control Escolar del nivel.
+ *
+ * modo=prueba → destino CARTA_EMAIL_TO_PRUEBA + aviso de revisión en el HTML.
+ * modo=padre  → contenido exacto a familia; destino = correo tutor (body.to).
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import nodemailer from 'nodemailer'
 import {
+  htmlCartaFamilia,
+  htmlNotificacionCe,
+  type ModoCorreo,
+} from './_lib/cartaBienvenidaHtml.js'
+import {
   correoCePorNivel,
   correoPrueba,
   mailSendErrorMessage,
-  smtpControlEscolar,
+  smtpAvisos,
 } from './_lib/mailSmtp.js'
-
-const COPIA_SISTEMAS = 'sistemas.desarrollo@winston93.edu.mx'
 
 type Body = {
   to?: string
+  modo?: ModoCorreo
   nivelLabel?: string
   replyTo?: string
   subject?: string
@@ -22,56 +29,12 @@ type Body = {
   folio?: string
   filename?: string
   pdfBase64?: string
+  /** Solo modo padre: notificar también a CE (default false hasta habilitar). */
+  notificarCe?: boolean
 }
 
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-}
-
-function htmlCarta(opts: {
-  nivelLabel: string
-  alumnoNombre: string
-  folio: string
-  fromUser: string
-}): string {
-  const institucion =
-    opts.nivelLabel === 'Kinder'
-      ? 'Instituto Educativo Winston'
-      : 'Instituto Winston Churchill'
-  return `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#f1f5f9;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;margin:0 auto;padding:24px 16px;">
-    <tr>
-      <td style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#1e40af 100%);border-radius:16px 16px 0 0;padding:22px 20px;text-align:center;">
-        <p style="margin:0;color:#fff;font-size:1.05rem;font-weight:700;">Winston USA Program · Carta de bienvenida</p>
-      </td>
-    </tr>
-    <tr>
-      <td style="background:#fff;padding:28px 24px;border:1px solid #e2e8f0;border-top:none;">
-        <p style="margin:0 0 14px;color:#334155;font-size:1rem;line-height:1.65;">Estimada familia:</p>
-        <p style="margin:0 0 14px;color:#334155;font-size:1rem;line-height:1.65;">
-          Adjunto encontrarán la carta de bienvenida de
-          <strong>${escapeHtml(opts.alumnoNombre || 'alumno(a)')}</strong>
-          (${escapeHtml(opts.folio || 'sin folio')}) al Winston USA Program
-          — nivel <strong>${escapeHtml(opts.nivelLabel)}</strong>.
-        </p>
-        <p style="margin:0 0 14px;color:#64748b;font-size:0.9rem;line-height:1.55;">
-          <em>Envío de prueba</em> a Sistemas Desarrollo. Remitente:
-          ${escapeHtml(opts.fromUser)} (Control Escolar ${escapeHtml(opts.nivelLabel)}).
-        </p>
-        <p style="margin:24px 0 8px;color:#1e293b;font-size:1rem;font-weight:700;">${escapeHtml(institucion)}</p>
-        <p style="margin:0;color:#64748b;font-size:0.85rem;">Control Escolar · ${escapeHtml(opts.nivelLabel)}</p>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`
+function parseModo(raw: unknown): ModoCorreo {
+  return raw === 'padre' ? 'padre' : 'prueba'
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -92,20 +55,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ ok: false, error: 'Falta pdfBase64' })
   }
 
-  const nivelLabel = body.nivelLabel || 'Primaria'
-  const smtp = smtpControlEscolar(nivelLabel)
+  const smtp = smtpAvisos()
   if ('error' in smtp) {
     return res.status(500).json({ ok: false, error: smtp.error })
   }
 
-  const to = (body.to || correoPrueba()).trim().toLowerCase()
+  const modo = parseModo(body.modo)
+  const nivelLabel = body.nivelLabel || 'Primaria'
+  const ceEmail = correoCePorNivel(nivelLabel)
+  const requestedTo = (body.to || '').trim().toLowerCase()
+  const to = modo === 'prueba' ? correoPrueba() : requestedTo
+
+  if (!to) {
+    return res.status(400).json({
+      ok: false,
+      error:
+        modo === 'padre'
+          ? 'modo=padre requiere correo destino (to = tutor o bandeja de revisión)'
+          : 'Falta destino de correo',
+    })
+  }
+
   const alumnoNombre = body.alumnoNombre || ''
   const folio = body.folio || ''
   const filename =
     body.filename ||
     `carta-bienvenida-${folio || 'alumno'}.pdf`.replace(/[^\w.-]+/g, '_')
-  const fromName = `Control Escolar ${nivelLabel}`
-  const replyTo = body.replyTo || correoCePorNivel(nivelLabel)
+  const replyTo = body.replyTo || ceEmail
+  const subject =
+    body.subject ||
+    (modo === 'prueba'
+      ? `[PRUEBA] Carta de bienvenida USA Program — ${alumnoNombre || folio || nivelLabel}`
+      : `Carta de bienvenida USA Program — ${alumnoNombre || folio || nivelLabel}`)
 
   let pdf: Buffer
   try {
@@ -117,6 +98,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ ok: false, error: 'PDF vacío o inválido' })
   }
 
+  const attachment = {
+    filename,
+    content: pdf,
+    contentType: 'application/pdf' as const,
+  }
+
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: { user: smtp.user, pass: smtp.pass },
@@ -124,35 +111,43 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const info = await transporter.sendMail({
-      from: `"${fromName}" <${smtp.user}>`,
+      from: `"Winston USA Program" <${smtp.user}>`,
       to,
-      bcc: to === COPIA_SISTEMAS ? undefined : COPIA_SISTEMAS,
       replyTo,
-      subject:
-        body.subject ||
-        `Carta de bienvenida USA Program — ${alumnoNombre || folio || nivelLabel}`,
-      html: htmlCarta({
+      subject,
+      html: htmlCartaFamilia({
         nivelLabel,
         alumnoNombre,
         folio,
-        fromUser: smtp.user,
+        modo,
       }),
-      attachments: [
-        {
-          filename,
-          content: pdf,
-          contentType: 'application/pdf',
-        },
-      ],
+      attachments: [attachment],
     })
+
+    const notificarCe = modo === 'padre' && body.notificarCe === true
+    let ceMessageId: string | undefined
+    if (notificarCe) {
+      const infoCe = await transporter.sendMail({
+        from: `"Winston USA Program" <${smtp.user}>`,
+        to: ceEmail,
+        replyTo: smtp.user,
+        subject: `Notificación: nuevo alumno USA Program — ${alumnoNombre || folio}`,
+        html: htmlNotificacionCe({ nivelLabel, alumnoNombre, folio }),
+        attachments: [attachment],
+      })
+      ceMessageId = infoCe.messageId
+    }
 
     return res.status(200).json({
       ok: true,
+      modo,
       messageId: info.messageId,
       to,
       from: smtp.user,
-      fromName,
       replyTo,
+      ceNotificado: notificarCe,
+      ceDestinoPrevisto: ceEmail,
+      ceMessageId: ceMessageId ?? null,
     })
   } catch (err) {
     return res.status(500).json({ ok: false, error: mailSendErrorMessage(err) })

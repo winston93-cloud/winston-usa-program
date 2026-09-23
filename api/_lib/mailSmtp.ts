@@ -1,5 +1,6 @@
 /**
- * SMTP helpers para APIs Vercel (sin importar desde src/).
+ * SMTP: un solo remitente — avisos_no-replay.
+ * Direcciones de Control Escolar solo para notificaciones (no SMTP).
  */
 export const CORREO_CE = {
   Kinder: 'controlescolariew@winston93.edu.mx',
@@ -27,42 +28,13 @@ export function smtpAvisos(): SmtpAuth | { error: string } {
   if (!pass) {
     return {
       error:
-        'Falta MAIL_PASS en Vercel (.env). Usa la contraseña de aplicación de Gmail sin espacios (16 caracteres).',
+        'Falta MAIL_PASS en Vercel. Contraseña de aplicación de avisos_no-replay (16 caracteres, sin espacios).',
     }
   }
   return { user, pass }
 }
 
-export function smtpControlEscolar(
-  nivel: string,
-): SmtpAuth | { error: string } {
-  const n =
-    nivel === 'Kinder' || nivel === 'Primaria' || nivel === 'Secundaria'
-      ? nivel
-      : 'Primaria'
-  const userEnv =
-    n === 'Kinder'
-      ? process.env.MAIL_CE_KINDER_USER
-      : n === 'Secundaria'
-        ? process.env.MAIL_CE_SECUNDARIA_USER
-        : process.env.MAIL_CE_PRIMARIA_USER
-  const passEnv =
-    n === 'Kinder'
-      ? process.env.MAIL_CE_KINDER_PASS
-      : n === 'Secundaria'
-        ? process.env.MAIL_CE_SECUNDARIA_PASS
-        : process.env.MAIL_CE_PRIMARIA_PASS
-
-  const user = (userEnv || CORREO_CE[n]).trim()
-  const pass = normalizeMailPass(passEnv)
-  if (!pass) {
-    return {
-      error: `Falta MAIL_CE_${n.toUpperCase()}_PASS en Vercel (carta 1.er pago desde Control Escolar)`,
-    }
-  }
-  return { user, pass }
-}
-
+/** Destino de prueba mientras no se envíe a padres. */
 export function correoPrueba(): string {
   return (
     process.env.CARTA_EMAIL_TO_PRUEBA?.trim() ||
@@ -70,6 +42,7 @@ export function correoPrueba(): string {
   ).toLowerCase()
 }
 
+/** Correo de Control Escolar del nivel (notificación / Reply-To). */
 export function correoCePorNivel(nivel: string): string {
   if (nivel === 'Kinder' || nivel === 'Primaria' || nivel === 'Secundaria') {
     return CORREO_CE[nivel]
@@ -77,13 +50,11 @@ export function correoCePorNivel(nivel: string): string {
   return CORREO_CE.Primaria
 }
 
-/** Mensaje legible si Gmail rechaza la contraseña de aplicación. */
 export function mailSendErrorMessage(err: unknown): string {
   const raw = err instanceof Error ? err.message : String(err ?? 'Error al enviar')
   if (/Invalid login|Username and Password not accepted|535|EAUTH/i.test(raw)) {
     return (
-      'Gmail rechazó la contraseña. Usa una contraseña de aplicación (16 caracteres, sin espacios) ' +
-      'en MAIL_PASS / MAIL_CE_*_PASS de Vercel, no la contraseña normal de la cuenta.'
+      'Gmail rechazó MAIL_PASS. Usa contraseña de aplicación de avisos_no-replay (16 caracteres, sin espacios).'
     )
   }
   return raw
