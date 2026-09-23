@@ -3,6 +3,11 @@ import {
   resolveAccessByEmail,
   type UsaSession,
 } from './authAccess'
+import {
+  demoSession,
+  isDemoLogin,
+  verifyDemoCredentials,
+} from './authDemo'
 
 type AuthLoginRow = {
   usuario_id: number
@@ -51,13 +56,20 @@ export async function loginManualClient(
   login: string,
   password: string,
 ): Promise<UsaSession> {
-  if (!isInsforgeConfigured) {
-    throw new Error('InsForge no configurado (INSFORGE_URL / INSFORGE_ANON_KEY).')
-  }
   const userLogin = login.trim()
   const pass = password
   if (!userLogin || !pass) {
     throw new Error('Usuario/correo y contraseña requeridos')
+  }
+
+  if (isDemoLogin(userLogin)) {
+    const ok = await verifyDemoCredentials(userLogin, pass)
+    if (!ok) throw new Error('Credenciales incorrectas')
+    return demoSession()
+  }
+
+  if (!isInsforgeConfigured) {
+    throw new Error('InsForge no configurado (INSFORGE_URL / INSFORGE_ANON_KEY).')
   }
 
   const { data, error } = await insforge.database.rpc('usa_programa_auth_login', {

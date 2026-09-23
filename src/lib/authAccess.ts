@@ -36,9 +36,21 @@ export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase()
 }
 
+/** Correo sintético de la cuenta demo (login `winston`). */
+export const DEMO_EMAIL = 'prueba@winston93.edu.mx'
+
 export function resolveAccessByEmail(emailRaw: string): UsaAccess | null {
   const email = normalizeEmail(emailRaw)
   if (!email.endsWith('@winston93.edu.mx')) return null
+
+  if (email === DEMO_EMAIL) {
+    return {
+      email,
+      role: 'admin',
+      nivelEditable: null,
+      label: 'Prueba',
+    }
+  }
 
   if (ADMIN_EMAILS.includes(email as (typeof ADMIN_EMAILS)[number])) {
     return {
