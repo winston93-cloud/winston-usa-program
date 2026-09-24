@@ -461,7 +461,7 @@ export function AlumnosTable({ alumnos, onChange, canEditNivel }: Props) {
   return (
     <div
       ref={wrapRef}
-      className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-brand-border bg-cell shadow-sm"
+      className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-brand-border bg-cell/90 shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
     >
       {alumnos.length === 0 ? (
         <div className="flex flex-1 items-center justify-center text-center text-ink-muted">

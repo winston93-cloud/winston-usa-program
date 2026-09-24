@@ -68,7 +68,7 @@ export function StatusMark({
 
   const interactive = ` ${
     onClick && !disabled
-      ? 'cursor-pointer hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-white/40'
+      ? 'cursor-pointer transition-[filter] duration-150 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tone-accent-ring)]'
       : ''
   } ${disabled ? 'opacity-50' : ''}`
 

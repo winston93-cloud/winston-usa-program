@@ -2,121 +2,121 @@
 
 /*
   =============================================================================
-  COLORES — marina (azul casi negro, solidificada)
-  =============================================================================
-  Jerarquía (poco contraste, pero legible):
-    soft     → fondo de página (más oscuro)
-    brand    → header / chrome
-    cell     → cuerpo de tabla (filas)
-    *head    → sub-header de tabla (doble fila)
-    deep     → band de secciones / hover
-    accent   → foco
-    border   → bordes sutiles
-
-  Para “un poco más azul”: sube saturación en --tone-brand, --tone-cell y
-  --tone-soft (misma luminosidad, más azul). No mezcles grises neutros.
+  Totality Festival + Impeccable (Winston USA Program)
+  Obsidiana · corona dorada · cian etéreo — claridad operativa.
+  Ref: servicios_admin pos-totality-theme / .impeccable.md
   =============================================================================
 */
 
 :root {
-  /* —— Azules marina —— */
-  --tone-soft: #060f1b; /* página */
-  --tone-deep: #13263a; /* band / hover */
-  --tone-brand: #16263b; /* header */
-  --tone-accent: #141f2e; /* foco */
-  --tone-border: #1e3a52; /* bordes */
-  --tone-cell: #132231; /* filas tabla */
-  --tone-sec-white: #132231;
-  --tone-sec-blue: #132231;
-  --tone-sec-bar-muted: #132231;
-  --tone-sec-white-head: #182f42; /* sub-header */
-  --tone-sec-blue-head: #182f42;
-  --tone-tint: #0c1c2c;
-  --tone-white: #182f42;
-  --tone-ink: #dce6f0;
-  --tone-ink-muted: #8fa3b8;
-  --tone-select-bg: #0c1c2c;
+  --tone-soft: #121318;
+  --tone-deep: #1a1b21;
+  --tone-brand: rgba(26, 27, 33, 0.92);
+  --tone-accent: #00e3fd;
+  --tone-accent-hover: #bdf4ff;
+  --tone-accent-ring: rgba(0, 227, 253, 0.35);
+  --tone-gold: #fff6df;
+  --tone-gold-bright: #ffd700;
+  --tone-gold-on: #3a3000;
+  --tone-border: rgba(255, 255, 255, 0.1);
+  --tone-border-mid: rgba(153, 144, 119, 0.35);
+  --tone-cell: #1a1b21;
+  --tone-sec-white: #1a1b21;
+  --tone-sec-blue: #1a1b21;
+  --tone-sec-bar-muted: #1a1b21;
+  --tone-sec-white-head: #292a2f;
+  --tone-sec-blue-head: #292a2f;
+  --tone-tint: #0d0e13;
+  --tone-white: #292a2f;
+  --tone-ink: #e3e1e9;
+  --tone-ink-muted: #999077;
+  --tone-ink-secondary: #d0c6ab;
+  --tone-select-bg: #0d0e13;
 
-  /* —— Marcas tabla —— */
-  --tone-mark-green: #107546;
-  --tone-mark-blue: #03407a;
-  --tone-mark-red: #ef4444;
-  --tone-mark-gray: #191d27;
-  --tone-mark-pending-bg: rgba(255, 255, 255, 0.04);
-  --tone-mark-pending-fg: rgba(255, 255, 255, 0.12);
+  --tone-mark-green: rgba(12, 131, 55, 0.80);
+  --tone-mark-blue: rgba(3, 105, 161, 0.55);
+  --tone-mark-red: rgba(239, 68, 68, 0.35);
+  --tone-mark-gray: #3f3f46;
+  --tone-mark-pending-bg: rgba(255, 255, 255, 0.06);
+  --tone-mark-pending-fg: rgba(227, 225, 233, 0.22);
   --tone-mark-on: #ffffff;
+
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.55);
+  --shadow-glow: 0 0 28px rgba(0, 227, 253, 0.12);
 }
 
 @theme {
-  /* --- Tipografía --- */
-  --font-sans: 'Figtree', 'Segoe UI', system-ui, sans-serif;
-  --font-display: 'Sora', 'Figtree', system-ui, sans-serif;
+  --font-sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
 
-  /* ========== MARCA ========== */
-  --color-brand: var(--tone-brand);
+  --color-brand: #1a1b21;
   --color-brand-hover: var(--tone-deep);
   --color-brand-accent: var(--tone-accent);
+  --color-brand-accent-hover: var(--tone-accent-hover);
   --color-brand-soft: var(--tone-soft);
-  --color-brand-muted: var(--tone-soft);
+  --color-brand-muted: var(--tone-tint);
   --color-brand-border: var(--tone-border);
   --color-brand-tint: var(--tone-tint);
-  --color-brand-on-surface: var(--tone-brand);
+  --color-brand-on-surface: var(--tone-deep);
+  --color-focus-ring: var(--tone-accent-ring);
+  --color-gold: var(--tone-gold);
+  --color-gold-bright: var(--tone-gold-bright);
+  --color-gold-on: var(--tone-gold-on);
+  --color-ink-secondary: var(--tone-ink-secondary);
 
-  /* ========== TEXTO ========== */
   --color-ink: var(--tone-ink);
   --color-ink-muted: var(--tone-ink-muted);
-  --color-on-brand: #ffffff;
-  --color-on-brand-muted: rgba(255, 255, 255, 0.72);
+  --color-on-brand: #e3e1e9;
+  --color-on-brand-muted: rgba(227, 225, 233, 0.72);
 
-  /* ========== CELDAS ========== */
   --color-cell: var(--tone-cell);
   --color-cell-calc: var(--tone-tint);
 
-  /* ========== SELECT OPTIONS ========== */
   --color-select-option-bg: var(--tone-select-bg);
   --color-select-option-text: var(--tone-ink);
 
-  /* ========== BAJA / ALERTA ========== */
-  --color-baja: #35282c;
+  --color-baja: #3a2428;
   --color-baja-border: #a08088;
-  --color-baja-text: #c49aa2;
+  --color-baja-text: #ffb4ab;
 
-  /* ========== ESTADO ========== */
   --color-estado-activo-cell: transparent;
-  --color-estado-activo-input: #0d7054;
-  --color-estado-activo-border: #5f8f7a;
-  --color-estado-activo-text: #8fbca8;
+  --color-estado-activo-input: #14532d;
+  --color-estado-activo-border: #86efac;
+  --color-estado-activo-text: #86efac;
 
   --color-estado-baja-cell: transparent;
   --color-estado-baja-input: #5f2436;
-  --color-estado-baja-border: #a08088;
-  --color-estado-baja-text: #c49aa2;
+  --color-estado-baja-border: #ffb4ab;
+  --color-estado-baja-text: #ffb4ab;
 
   --color-estado-reembolso-cell: transparent;
   --color-estado-reembolso-input: #1a2834;
-  --color-estado-reembolso-border: #6a8090;
-  --color-estado-reembolso-text: #9aadb8;
+  --color-estado-reembolso-border: #999077;
+  --color-estado-reembolso-text: #d0c6ab;
 
-  /* ========== CHIPS ========== */
-  --color-chip-base: var(--tone-brand);
-  --color-chip-activos: var(--color-estado-activo-input);
-  --color-chip-devoluciones: var(--color-estado-baja-input);
-  --color-chip-recaudado: #2d7a58;
-  --color-chip-saldo: #a86a3c;
-  --color-chip-saldo-soft: #35282c;
-  --color-text-activos: #059669;
-  --color-text-devoluciones: #c11d48;
+  --color-chip-base: #292a2f;
+  --color-chip-activos: #14532d;
+  --color-chip-devoluciones: #5f2436;
+  --color-chip-recaudado: #86efac;
+  --color-chip-saldo: #fde68a;
+  --color-chip-saldo-soft: #3a2428;
+  --color-text-activos: #86efac;
+  --color-text-devoluciones: #ffb4ab;
 
-  /* ========== FRANJAS DE TABLA ========== */
   --color-sec-white: var(--tone-sec-white);
   --color-sec-white-head: var(--tone-sec-white-head);
   --color-sec-blue: var(--tone-sec-blue);
   --color-sec-blue-head: var(--tone-sec-blue-head);
-  --color-sec-bar: var(--tone-deep);
-  --color-sec-bar-text: #ffffff;
+  --color-sec-bar: #0d0e13;
+  --color-sec-bar-text: var(--tone-gold);
   --color-sec-bar-muted: var(--tone-sec-bar-muted);
 
-  /* ========== MARCAS TABLA ========== */
   --color-mark-green: var(--tone-mark-green);
   --color-mark-blue: var(--tone-mark-blue);
   --color-mark-red: var(--tone-mark-red);
@@ -140,14 +140,30 @@ body,
 
 body {
   margin: 0;
-  background: var(--color-brand-soft);
   color: var(--color-ink);
   font-family: var(--font-sans);
-  font-size: 15px;
-  line-height: 1.45;
+  font-size: 16px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 0%, rgba(0, 227, 253, 0.1) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 50% at 80% 90%, rgba(231, 209, 255, 0.06) 0%, transparent 50%),
+    radial-gradient(circle at 50% 40%, rgba(255, 215, 0, 0.05) 0%, transparent 45%),
+    var(--tone-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 .table-scroll {
@@ -158,7 +174,7 @@ body {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--tone-border) transparent;
+  scrollbar-color: rgba(153, 144, 119, 0.45) transparent;
 }
 
 *::-webkit-scrollbar {
@@ -171,7 +187,7 @@ body {
 }
 
 *::-webkit-scrollbar-thumb {
-  background: var(--tone-border);
+  background: rgba(153, 144, 119, 0.45);
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: content-box;
@@ -194,6 +210,17 @@ textarea {
   font-family: inherit;
 }
 
+button,
+[role='button'],
+a {
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--tone-accent);
+  outline-offset: 2px;
+}
+
 select option {
   background-color: var(--color-select-option-bg);
   color: var(--color-select-option-text);
@@ -203,4 +230,26 @@ input[type='date']::-webkit-calendar-picker-indicator {
   cursor: pointer;
   filter: invert(0.85);
   opacity: 0.85;
+}
+
+.login-shell {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 0%, rgba(0, 227, 253, 0.14) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 50% at 85% 95%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 20% 80%, rgba(231, 209, 255, 0.08) 0%, transparent 40%),
+    var(--tone-soft);
+}
+
+.btn-totality-primary {
+  background: linear-gradient(135deg, #fff6df 0%, #ffd700 100%);
+  color: var(--tone-gold-on);
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.2);
+}
+
+.btn-totality-primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.text-totality-gold {
+  color: var(--tone-gold);
 }

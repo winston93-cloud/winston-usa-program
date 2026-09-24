@@ -21,7 +21,7 @@ export function InstructionsModal({ open, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-[2px]"
       onClick={onClose}
       role="presentation"
     >
@@ -29,24 +29,24 @@ export function InstructionsModal({ open, onClose }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="instrucciones-titulo"
-        className="max-h-[min(90dvh,40rem)] w-full max-w-lg overflow-y-auto rounded-xl border border-brand-border bg-cell p-4 shadow-xl sm:p-6"
+        className="max-h-[min(90dvh,40rem)] w-full max-w-lg overflow-y-auto rounded-xl border border-brand-border bg-cell p-4 shadow-[0_24px_60px_rgba(0,0,0,0.45)] sm:p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-3">
           <h2
             id="instrucciones-titulo"
-            className="font-display inline-flex items-center gap-2 text-xl font-semibold text-white/90"
+            className="font-display inline-flex items-center gap-2 text-xl font-semibold text-gold"
           >
-            <FontAwesomeIcon icon={faCircleInfo} />
+            <FontAwesomeIcon icon={faCircleInfo} aria-hidden />
             Cómo usar el panel
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex size-8 items-center justify-center rounded-md text-ink-muted hover:bg-brand-soft"
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-ink-muted transition-[background-color,color] duration-150 hover:bg-brand-soft hover:text-ink"
             aria-label="Cerrar"
           >
-            <FontAwesomeIcon icon={faXmark} className="text-lg" />
+            <FontAwesomeIcon icon={faXmark} className="text-lg" aria-hidden />
           </button>
         </div>
 

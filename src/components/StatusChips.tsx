@@ -35,34 +35,34 @@ const CHIP_GAP_CLASS = 'gap-2'
 const CHIP_STYLE: Record<string, { idle: string; active: string; dot: string }> =
   {
     'chip-todos': {
-      idle: 'border-chip-base/20 bg-chip-base/50 text-white/75',
-      active: 'border-chip-base bg-chip-base text-on-brand',
-      dot: 'bg-chip-base',
+      idle: 'border-sky-600/15 bg-sky-700/10 text-sky-200/85',
+      active: 'border-sky-500/10 bg-sky-600/35 text-sky-100',
+      dot: 'bg-sky-400/70',
     },
     'chip-inscritos': {
-      idle: 'border-chip-base/20 bg-chip-base/50 text-white/75',
-      active: 'border-chip-base bg-chip-base text-on-brand',
-      dot: 'bg-chip-base',
+      idle: 'border-sky-600/25 bg-sky-700/10 text-sky-200/85',
+      active: 'border-sky-500/10 bg-sky-600/35 text-sky-100',
+      dot: 'bg-sky-400/70',
     },
     'chip-activos': {
-      idle: 'border-chip-base/20 bg-chip-base/50 text-text-activos',
-      active: 'border-chip-activos bg-chip-activos text-on-brand',
-      dot: 'bg-chip-activos',
+      idle: 'border-emerald-700/25 bg-emerald-800/10 text-emerald-250/90',
+      active: 'border-emerald-600/10 bg-emerald-700/35 text-emerald-200',
+      dot: 'bg-emerald-400/70',
     },
     'chip-liquidados': {
-      idle: 'border-chip-base/20 bg-chip-base/50 text-text-activos',
-      active: 'border-chip-activos bg-chip-activos text-on-brand',
-      dot: 'bg-chip-activos',
+      idle: 'border-emerald-700/25 bg-emerald-800/10 text-emerald-250/90',
+      active: 'border-emerald-600/10 bg-emerald-700/35 text-emerald-200',
+      dot: 'bg-emerald-400/70',
     },
     'chip-archivo': {
-      idle: 'border-chip-base/20 bg-chip-base/50 text-white/75',
-      active: 'border-chip-base bg-chip-base text-on-brand',
-      dot: 'bg-chip-base',
+      idle: 'border-sky-600/25 bg-sky-700/10 text-sky-200/85',
+      active: 'border-sky-500/10 bg-sky-600/35 text-sky-100',
+      dot: 'bg-sky-400/70',
     },
     'chip-devoluciones': {
-      idle: 'border-chip-base/20 bg-chip-base/50 text-text-devoluciones',
-      active: 'border-chip-devoluciones bg-chip-devoluciones text-on-brand',
-      dot: 'bg-chip-devoluciones',
+      idle: 'border-rose-700/25 bg-rose-900/10 text-rose-250/90',
+      active: 'border-rose-600/10 bg-rose-800/35 text-rose-200',
+      dot: 'bg-rose-400/70',
     },
   }
 
@@ -97,7 +97,7 @@ export function StatusChips({
             onChange={(e) => onSearch(e.target.value)}
             placeholder="Buscar…"
             aria-label="Buscar alumno"
-            className="h-full w-full rounded-full border border-brand-border bg-cell py-2 pr-3 pl-9 text-sm text-ink outline-none placeholder:text-ink-muted focus:border-brand-accent focus:ring-2 focus:ring-brand-muted"
+            className="h-full min-h-11 w-full rounded-full border border-brand-border bg-cell py-2 pr-3 pl-9 text-sm text-ink outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-ink-muted focus:border-brand-accent focus:ring-2 focus:ring-[var(--tone-accent-ring)]"
           />
         </label>
 
@@ -114,7 +114,7 @@ export function StatusChips({
                 title={CHIP_HINTS[id]}
                 onClick={() => onChip(id)}
                 style={{ flexGrow: CHIP_FLEX_GROW[id], flexBasis: 0 }}
-                className={`inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full border px-3 py-2 text-[0.65rem] font-semibold tracking-wide uppercase sm:gap-2 sm:text-xs md:min-w-0 md:shrink ${
+                className={`inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-full border px-3 py-2 text-[0.65rem] font-semibold tracking-wide uppercase transition-[background-color,border-color,color] duration-150 sm:gap-2 sm:text-xs md:min-w-0 md:shrink ${
                   selected ? style.active : style.idle
                 }`}
               >

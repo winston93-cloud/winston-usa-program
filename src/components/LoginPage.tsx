@@ -76,6 +76,9 @@ function GoogleMark() {
   )
 }
 
+const fieldClass =
+  'mt-1.5 min-h-11 w-full rounded-lg border border-brand-border bg-[#0d0e13] px-3 py-2.5 text-ink outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-ink-muted focus:border-brand-accent focus:ring-2 focus:ring-[var(--tone-accent-ring)]'
+
 export function LoginPage() {
   const { loginManual, loginGoogle, completeGoogleInsforgeSession } = useAuth()
   const [login, setLogin] = useState('')
@@ -92,7 +95,6 @@ export function LoginPage() {
     import.meta.env.USA_GOOGLE_CLIENT_ID as string | undefined
   )?.trim()
 
-  // Tras redirect InsForge OAuth (?insforge_code=…) o sesión Google ya activa
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const oauthError =
@@ -127,7 +129,6 @@ export function LoginPage() {
   }, [completeGoogleInsforgeSession])
 
   useEffect(() => {
-    // InsForge ya tiene Google OAuth habilitado → botón listo sin GIS
     if (!clientId) {
       setGoogleReady(true)
       return
@@ -165,7 +166,6 @@ export function LoginPage() {
         })
         setGoogleReady(true)
       } catch (e) {
-        // Si GIS falla, igual usamos OAuth InsForge
         setError(e instanceof Error ? e.message : 'No se pudo cargar Google')
         setGoogleReady(true)
       }
@@ -195,7 +195,6 @@ export function LoginPage() {
       setBusy(true)
       setError('')
       try {
-        // Preferir GIS si hay Client ID local; si no, OAuth InsForge (Google ya activo)
         if (clientId && tokenClient.current) {
           tokenClient.current.requestAccessToken({ prompt: 'select_account' })
           return
@@ -213,7 +212,6 @@ export function LoginPage() {
         if (oauthError) {
           throw new Error(oauthError.message || 'No se pudo iniciar Google')
         }
-        // El SDK redirige al navegador; si no, quedamos en busy hasta el return
       } catch (e) {
         setError(
           e instanceof Error
@@ -226,51 +224,57 @@ export function LoginPage() {
   }, [clientId])
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-brand-soft px-4 py-8">
-      <div className="w-full max-w-md rounded-2xl border border-brand-border bg-cell p-6 shadow-lg sm:p-8">
-        <div className="mb-6 text-center">
-          <p className="text-xs font-semibold tracking-[0.16em] text-white/70 uppercase">
+    <div className="login-shell flex min-h-dvh items-center justify-center px-4 py-8">
+      <div className="w-full max-w-md rounded-xl border border-brand-border bg-[rgba(52,52,58,0.35)] p-6 shadow-[0_16px_48px_rgba(0,0,0,0.55)] backdrop-blur-xl sm:p-8">
+        <div className="mb-7 text-center">
+          <p className="font-display text-xs font-semibold tracking-[0.16em] text-ink-secondary uppercase">
             Winston–Hökku Academy
           </p>
-          <h1 className="font-display mt-1 text-2xl font-bold text-white">
+          <h1 className="font-display mt-2 text-2xl font-bold tracking-tight text-ink sm:text-3xl">
             Programa USA
           </h1>
+          <p className="mt-2 text-sm text-ink-muted">
+            Control de alumnos · acceso institucional
+          </p>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-3">
-          <label className="block text-sm font-medium text-ink">
+        <form onSubmit={onSubmit} className="space-y-4" noValidate>
+          <label className="block text-sm font-medium text-ink-secondary">
             Correo o usuario
             <input
               type="text"
               autoComplete="username"
               value={login}
               onChange={(e) => setLogin(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-brand-border bg-cell px-3 py-2.5 text-ink outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-muted"
+              className={fieldClass}
               required
             />
           </label>
-          <label className="block text-sm font-medium text-ink">
+          <label className="block text-sm font-medium text-ink-secondary">
             Contraseña
             <input
               type="password"
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-brand-border bg-cell px-3 py-2.5 text-ink outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-muted"
+              className={fieldClass}
               required
             />
           </label>
           {error ? (
-            <p className="rounded-lg bg-estado-baja-input/40 px-3 py-2 text-sm text-estado-baja-text">
+            <p
+              role="alert"
+              className="rounded-lg border border-estado-baja-border/40 bg-estado-baja-input/50 px-3 py-2.5 text-sm text-estado-baja-text"
+            >
               {error}
             </p>
           ) : null}
           <button
             type="submit"
             disabled={busy}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-sec-white-head px-4 py-2.5 text-sm font-semibold text-on-brand hover:opacity-95 disabled:opacity-60"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-sky-600/30 bg-sky-700/25 px-4 py-2.5 text-sm font-semibold text-sky-100 transition-[background-color,border-color,opacity] duration-150 hover:border-sky-500/40 hover:bg-sky-600/35 disabled:cursor-wait disabled:opacity-60"
           >
-            <FontAwesomeIcon icon={faRightToBracket} />
+            <FontAwesomeIcon icon={faRightToBracket} aria-hidden />
             {busy ? 'Entrando…' : 'Entrar'}
           </button>
         </form>
@@ -285,8 +289,7 @@ export function LoginPage() {
           type="button"
           disabled={busy || !googleReady}
           onClick={onGoogle}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-brand-border bg-white px-4 py-2.5 text-sm text-black/80 
-          font-semibold hover:bg-brand-soft hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-brand-border bg-white/95 px-4 py-2.5 text-sm font-semibold text-slate-800 transition-[background-color,opacity] duration-150 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           <GoogleMark />
           {busy ? 'Conectando…' : 'Continuar con Google'}

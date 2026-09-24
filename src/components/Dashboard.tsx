@@ -52,7 +52,7 @@ export function Dashboard() {
     nivel !== session.nivelEditable
 
   return (
-    <div className="flex h-dvh max-h-dvh flex-col overflow-hidden bg-brand-soft">
+    <div className="flex h-dvh max-h-dvh flex-col overflow-hidden">
       <AppHeader
         onHelp={() => setInfoOpen(true)}
         nivel={nivel}

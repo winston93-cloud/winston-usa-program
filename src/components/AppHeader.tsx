@@ -19,6 +19,13 @@ type Props = {
   canSync?: boolean
 }
 
+/** Controles del header: mismo alto (salvo título/subtítulo). Texto secundario en azul opaco. */
+const chrome =
+  'inline-flex h-10 items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 text-sm font-semibold text-sky-200/85 transition-[background-color,color] duration-150 hover:bg-white/15 hover:text-sky-100'
+
+const iconBtn =
+  'inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-sky-200/85 transition-[background-color,color] duration-150 hover:bg-white/15 hover:text-sky-100 disabled:cursor-wait disabled:opacity-60'
+
 export function AppHeader({
   onHelp,
   nivel,
@@ -32,28 +39,30 @@ export function AppHeader({
   const nombreCorto = shortSessionName(session)
 
   return (
-    <header className="shrink-0 border-b border-brand-border bg-brand text-on-brand">
-      <div className="mx-auto flex w-full flex-wrap items-center justify-between gap-3 px-3 py-3 sm:gap-4 sm:px-5 sm:py-4">
+    <header className="shrink-0 border-b border-brand-border bg-[rgba(26,27,33,0.78)] text-on-brand shadow-[0_4px_24px_rgba(0,0,0,0.4)] backdrop-blur-xl">
+      <div className="mx-auto flex w-full flex-wrap items-center justify-between gap-3 px-3 py-3 sm:gap-3 sm:px-5">
         <div className="min-w-0 flex-1">
-          <h1 className="font-display text-xl leading-tight font-bold tracking-tight">
+          <h1 className="font-display text-lg leading-tight font-bold tracking-tight text-ink sm:text-xl">
             PROGRAMA WINSTON–HÖKKU ACADEMY
           </h1>
-          <p className="mt-0.5 text-[0.7rem] font-semibold tracking-[0.14em] text-on-brand-muted uppercase sm:mt-1 sm:text-sm sm:tracking-[0.18em]">
+          <p className="mt-0.5 text-[0.7rem] font-semibold tracking-[0.14em] text-ink-muted uppercase sm:text-xs sm:tracking-[0.16em]">
             Ciclo escolar {CICLO_ESCOLAR}
           </p>
         </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-1.5 sm:gap-3">
-          <p className="hidden rounded-full bg-white/5 px-3 py-2 text-sm md:inline-block lg:px-4 lg:py-2.5">
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <p className={`hidden md:inline-flex ${chrome}`}>
             Cuota anual:{' '}
-            <span className="font-semibold">{formatUsd(CUOTA_ANUAL_USD)}</span>
+            <span className="font-semibold tabular-nums text-sky-100">
+              {formatUsd(CUOTA_ANUAL_USD)}
+            </span>
           </p>
 
-          <label className="flex items-center gap-2 rounded-full bg-white/5 px-2.5 py-1 text-xs font-semibold tracking-wide uppercase sm:px-3.5 sm:py-2 sm:text-sm">
-            Nivel
+          <label className={chrome}>
+            <span className="tracking-wide uppercase">Nivel</span>
             <select
               value={nivel}
               onChange={(e) => onNivel(e.target.value as Nivel | 'Todos')}
-              className="rounded-2xl border-1 border-white/40 bg-brand/40 px-1.5 py-1.25 text-[0.85rem] font-medium text-on-brand normal-case outline-none focus:ring-2 focus:ring-white/30"
+              className="h-7 rounded-md border border-white/20 bg-[#0d0e13] px-2 text-sm font-medium text-sky-100 normal-case outline-none focus:ring-2 focus:ring-white/25"
             >
               <option value="Todos">Todos</option>
               {NIVELES.map((n) => (
@@ -71,11 +80,12 @@ export function AppHeader({
               disabled={syncing}
               title={`Sincronizar pagos del ciclo ${CICLO_ESCOLAR}`}
               aria-label={syncing ? 'Sincronizando pagos' : 'Sincronizar pagos'}
-              className="inline-flex size-9 items-center justify-center rounded-full bg-white/5 text-on-brand hover:bg-white/20 disabled:cursor-wait disabled:opacity-60 sm:size-10"
+              className={iconBtn}
             >
               <FontAwesomeIcon
                 icon={faRotate}
-                className={`text-base ${syncing ? 'animate-spin' : ''}`}
+                className={`text-sm ${syncing ? 'animate-spin' : ''}`}
+                aria-hidden
               />
             </button>
           ) : null}
@@ -83,30 +93,32 @@ export function AppHeader({
           <button
             type="button"
             onClick={onHelp}
-            className="inline-flex items-center gap-2 rounded-full bg-white/5 px-2.5 py-2 text-sm font-semibold hover:bg-white/20 sm:px-4 sm:py-2.5"
+            className={chrome}
             aria-label="Ayuda e instrucciones"
           >
             <span className="hidden sm:inline">Ayuda</span>
-            <FontAwesomeIcon icon={faCircleInfo} className="text-lg" />
+            <FontAwesomeIcon icon={faCircleInfo} className="text-sm" aria-hidden />
           </button>
 
           <div
-            className="flex max-w-[7.5rem] flex-col items-end rounded-full bg-white/10 px-2.5 py-1.5 sm:max-w-[9rem]"
+            className="inline-flex h-10 max-w-[8.5rem] flex-col justify-center rounded-lg border border-white/10 bg-white/10 px-3"
             title={`${session.label} · ${session.nombre} · ${session.email}`}
           >
-            <span className="truncate text-[0.65rem] font-semibold tracking-wide uppercase opacity-80">
+            <span className="truncate text-[0.65rem] font-semibold tracking-wide text-sky-200/70 uppercase">
               {session.label}
             </span>
-            <span className="truncate text-xs">{nombreCorto}</span>
+            <span className="truncate text-sm font-semibold text-sky-100">
+              {nombreCorto}
+            </span>
           </div>
           <button
             type="button"
             onClick={onLogout}
             title="Cerrar sesión"
             aria-label="Cerrar sesión"
-            className="inline-flex size-9 items-center justify-center rounded-full bg-white/5 hover:bg-white/20 sm:size-10"
+            className={iconBtn}
           >
-            <FontAwesomeIcon icon={faRightFromBracket} />
+            <FontAwesomeIcon icon={faRightFromBracket} className="text-sm" aria-hidden />
           </button>
         </div>
       </div>

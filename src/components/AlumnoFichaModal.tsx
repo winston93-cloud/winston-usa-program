@@ -32,7 +32,7 @@ function Section({
 }) {
   return (
     <section className="border-b border-brand-border last:border-b-0">
-      <h3 className="bg-brand px-4 py-2 text-[0.7rem] font-semibold tracking-[0.14em] text-white/80 uppercase sm:px-5">
+      <h3 className="bg-[#0d0e13] px-4 py-2 font-display text-[0.7rem] font-semibold tracking-[0.14em] text-gold uppercase sm:px-5">
         {title}
       </h3>
       <div className="grid gap-0 sm:grid-cols-2 ">{children}</div>
@@ -80,7 +80,7 @@ export function AlumnoFichaModal({ alumno, open, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-6"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-[2px] sm:p-6"
       onClick={onClose}
       role="presentation"
     >
@@ -88,14 +88,14 @@ export function AlumnoFichaModal({ alumno, open, onClose }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="ficha-titulo"
-        className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-brand/20 bg-cell shadow-xl"
+        className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-brand-border bg-cell shadow-[0_24px_60px_rgba(0,0,0,0.45)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-brand/20 bg-brand px-4 py-4 text-on-brand sm:px-5">
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-brand-border bg-brand px-4 py-4 text-on-brand sm:px-5">
           <div className="min-w-0 flex-1">
             <h2
               id="ficha-titulo"
-              className="font-display truncate text-xl leading-tight font-bold tracking-tight sm:text-2xl"
+              className="font-display truncate text-xl leading-tight font-bold tracking-tight text-gold sm:text-2xl"
             >
               {alumno.nombreCompleto || 'Sin nombre'}
             </h2>
@@ -129,6 +129,7 @@ export function AlumnoFichaModal({ alumno, open, onClose }: Props) {
               type="button"
               disabled={!alumno.nombreCompleto?.trim() || pdfBusy}
               title="Descargar carta PDF"
+              aria-label={pdfBusy ? 'Generando PDF' : 'Descargar carta PDF'}
               onClick={() => {
                 void (async () => {
                   setPdfBusy(true)
@@ -139,17 +140,17 @@ export function AlumnoFichaModal({ alumno, open, onClose }: Props) {
                   }
                 })()
               }}
-              className="inline-flex size-9 items-center justify-center rounded-full bg-white/5 text-on-brand hover:bg-white/20 disabled:opacity-40"
+              className="inline-flex size-11 items-center justify-center rounded-full bg-white/5 text-on-brand transition-[background-color,opacity] duration-150 hover:bg-white/15 disabled:opacity-40"
             >
-              <FontAwesomeIcon icon={faFilePdf} />
+              <FontAwesomeIcon icon={faFilePdf} aria-hidden />
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex size-9 items-center justify-center rounded-full bg-white/5 text-on-brand hover:bg-white/20"
+              className="inline-flex size-11 items-center justify-center rounded-full bg-white/5 text-on-brand transition-[background-color] duration-150 hover:bg-white/15"
               aria-label="Cerrar"
             >
-              <FontAwesomeIcon icon={faXmark} className="text-lg" />
+              <FontAwesomeIcon icon={faXmark} className="text-lg" aria-hidden />
             </button>
           </div>
         </div>
