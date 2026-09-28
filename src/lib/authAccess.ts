@@ -6,17 +6,28 @@ export type UsaRole = 'admin' | 'control_escolar'
 export type UsaAccess = {
   email: string
   role: UsaRole
-  /** null = puede editar todos los niveles (admin) */
+  /** null = puede editar todos los niveles (admin / dirección) */
   nivelEditable: Nivel | null
   label: string
 }
 
-/** Cuentas de Sistemas / administración (editan todo). */
-export const ADMIN_EMAILS = [
+/** Sistemas — acceso total (editar + validar). */
+export const SISTEMAS_EMAILS = [
   'sistemas.desarrollo@winston93.edu.mx',
   'sistemas@winston93.edu.mx',
   'sistemas2@winston93.edu.mx',
   'sistemas3@winston93.edu.mx',
+] as const
+
+/** Dirección académica — acceso total (editar + validar). */
+export const DIRECCION_EMAILS = [
+  'direccion.academica@winston93.edu.mx',
+] as const
+
+/** Alias histórico (Sistemas + DG). Preferir SISTEMAS_EMAILS / DIRECCION. */
+export const ADMIN_EMAILS = [
+  ...SISTEMAS_EMAILS,
+  ...DIRECCION_EMAILS,
   'dg@winston93.edu.mx',
 ] as const
 
@@ -39,6 +50,12 @@ export function normalizeEmail(email: string): string {
 /** Correo sintético de la cuenta demo (login `winston`). */
 export const DEMO_EMAIL = 'prueba@winston93.edu.mx'
 
+/**
+ * Allowlist USA Program (Google / InsForge):
+ * - Sistemas y Dirección académica → admin (todo)
+ * - Control Escolar por nivel → solo su nivel
+ * - Validar archivo final → solo CE Primaria (+ admins)
+ */
 export function resolveAccessByEmail(emailRaw: string): UsaAccess | null {
   const email = normalizeEmail(emailRaw)
   if (!email.endsWith('@winston93.edu.mx')) return null
@@ -52,7 +69,25 @@ export function resolveAccessByEmail(emailRaw: string): UsaAccess | null {
     }
   }
 
-  if (ADMIN_EMAILS.includes(email as (typeof ADMIN_EMAILS)[number])) {
+  if (DIRECCION_EMAILS.includes(email as (typeof DIRECCION_EMAILS)[number])) {
+    return {
+      email,
+      role: 'admin',
+      nivelEditable: null,
+      label: 'Dir. Acad.',
+    }
+  }
+
+  if (SISTEMAS_EMAILS.includes(email as (typeof SISTEMAS_EMAILS)[number])) {
+    return {
+      email,
+      role: 'admin',
+      nivelEditable: null,
+      label: 'Sistemas',
+    }
+  }
+
+  if (email === 'dg@winston93.edu.mx') {
     return {
       email,
       role: 'admin',
@@ -81,6 +116,16 @@ export function canEditNivel(
   if (!access) return false
   if (access.role === 'admin') return true
   return access.nivelEditable === nivel
+}
+
+/**
+ * Solo Control Escolar Primaria (y admins: Sistemas / Dir. Acad.) pueden
+ * marcar Validación final.
+ */
+export function canValidar(access: UsaAccess | null | undefined): boolean {
+  if (!access) return false
+  if (access.role === 'admin') return true
+  return access.nivelEditable === 'Primaria'
 }
 
 /** Nombre corto para el chip del header (1ª palabra). */

@@ -226,9 +226,6 @@ export function AlumnoFichaModal({ alumno, open, onClose }: Props) {
             <Row label="Expediente documental">
               <ReadValue value={etiquetaExpediente(alumno)} />
             </Row>
-            <Row label="Autorización CE">
-              <ReadValue value={alumno.autorizacionControlEscolar} />
-            </Row>
             <Row label="Validación archivo">
               <ReadValue value={alumno.validacionArchivoFinal} />
             </Row>

@@ -10,6 +10,7 @@ import {
 import {
   USA_SESSION_KEY,
   canEditNivel,
+  canValidar,
   resolveAccessByEmail,
   type UsaSession,
 } from '../lib/authAccess'
@@ -26,6 +27,8 @@ type AuthValue = {
   completeGoogleInsforgeSession: () => Promise<boolean>
   logout: () => void
   canEdit: (nivel: Nivel | string) => boolean
+  /** Solo CE Primaria (+ Sistemas / Dir. Acad.) puede marcar Validación. */
+  canValidar: boolean
   isAdmin: boolean
 }
 
@@ -126,6 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       completeGoogleInsforgeSession,
       logout,
       canEdit: (nivel) => canEditNivel(session, nivel),
+      canValidar: canValidar(session),
       isAdmin: session?.role === 'admin',
     }),
     [

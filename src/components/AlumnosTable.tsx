@@ -6,7 +6,11 @@ import {
   type ReactNode,
 } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowUpRightFromSquare, faIdCard } from '@fortawesome/free-solid-svg-icons'
+import {
+  faArrowUpRightFromSquare,
+  faCopy,
+  faIdCard,
+} from '@fortawesome/free-solid-svg-icons'
 import { PAGO_1_USD, PAGO_2_USD, PAGO_3_USD } from '../lib/constants'
 import {
   etiquetaExpediente,
@@ -100,12 +104,14 @@ function AlumnoCell({
   alumno,
   onChange,
   editable,
+  canValidar,
   onOpenFicha,
 }: {
   colId: ColumnId
   alumno: Alumno
   onChange: (id: string, patch: AlumnoPatch) => void
   editable: boolean
+  canValidar: boolean
   onOpenFicha: () => void
 }) {
   const patch = (next: AlumnoPatch) => {
@@ -118,7 +124,6 @@ function AlumnoCell({
       | 'carpetaDrive'
       | 'curpDrive'
       | 'boletasDrive'
-      | 'autorizacionControlEscolar'
       | 'validacionArchivoFinal',
     current: string,
   ) => {
@@ -274,41 +279,112 @@ function AlumnoCell({
           : 'Boletas pendientes en Drive',
         () => toggleSn('boletasDrive', alumno.boletasDrive),
       )
-    case 'autorizacion':
-      return snMark(
-        alumno.autorizacionControlEscolar === 'Si',
-        alumno.autorizacionControlEscolar === 'Si'
-          ? 'Autorizado CE'
-          : 'Sin autorización CE',
-        () =>
-          toggleSn(
-            'autorizacionControlEscolar',
-            alumno.autorizacionControlEscolar,
-          ),
-        { variant: 'tile', tileIcon: 'stamp', doneTone: 'blue' },
-      )
     case 'validacion':
       return snMark(
         alumno.validacionArchivoFinal === 'Si',
         alumno.validacionArchivoFinal === 'Si'
           ? 'Validado'
-          : 'Validación pendiente',
-        () =>
-          toggleSn('validacionArchivoFinal', alumno.validacionArchivoFinal),
+          : canValidar
+            ? 'Validación pendiente'
+            : 'Solo CE Primaria puede validar',
+        editable && canValidar
+          ? () =>
+              toggleSn(
+                'validacionArchivoFinal',
+                alumno.validacionArchivoFinal,
+              )
+          : undefined,
         { variant: 'tile', label: 'Listo' },
       )
+    case 'copiarInfo':
+      return <CopyExcelCell alumno={alumno} />
     default:
       return <ReadCell>—</ReadCell>
   }
+}
+
+function excelPreviewParts(alumno: Alumno) {
+  return {
+    nombre: alumno.nombreCompleto.trim() || '—',
+    nacimiento: alumno.fechaNacimiento.trim() || '—',
+    curp: alumno.curp.trim() || '—',
+  }
+}
+
+/** TSV (tabs) → Excel pega nombre | nacimiento | CURP en celdas contiguas. */
+function CopyExcelCell({ alumno }: { alumno: Alumno }) {
+  const [copied, setCopied] = useState(false)
+  const listo = alumno.validacionArchivoFinal === 'Si'
+  const preview = excelPreviewParts(alumno)
+
+  if (!listo) {
+    return <div className="min-h-9 w-full" aria-hidden />
+  }
+
+  const onCopy = () => {
+    void (async () => {
+      const tsv = [preview.nombre, preview.nacimiento, preview.curp].join('\t')
+      try {
+        await navigator.clipboard.writeText(tsv)
+        setCopied(true)
+        window.setTimeout(() => setCopied(false), 1600)
+      } catch {
+        setCopied(false)
+      }
+    })()
+  }
+
+  return (
+    <div className="group relative flex h-full min-h-9 w-full items-center justify-center px-0.5">
+      <div
+        role="tooltip"
+        className="pointer-events-none absolute bottom-[calc(100%+0.35rem)] left-1/2 z-50 hidden w-max max-w-[14rem] -translate-x-1/2 rounded-lg border border-sky-600/30 bg-[#0d0e13] px-2.5 py-2 text-left shadow-[0_8px_24px_rgba(0,0,0,0.45)] group-hover:block group-focus-within:block"
+      >
+        <p className="mb-1 text-[0.6rem] font-semibold tracking-wide text-sky-200/70 uppercase">
+          Vista previa · Excel
+        </p>
+        <ul className="space-y-0.5 text-[0.65rem] leading-snug text-ink">
+          <li>
+            <span className="text-ink-muted">A </span>
+            {preview.nombre}
+          </li>
+          <li>
+            <span className="text-ink-muted">B </span>
+            {preview.nacimiento}
+          </li>
+          <li>
+            <span className="text-ink-muted">C </span>
+            {preview.curp}
+          </li>
+        </ul>
+      </div>
+      <button
+        type="button"
+        onClick={onCopy}
+        title={`${preview.nombre} | ${preview.nacimiento} | ${preview.curp}`}
+        aria-label={`Copiar datos de ${preview.nombre} para Excel`}
+        className="inline-flex min-h-8 w-full items-center justify-center gap-1.5 rounded-md border border-sky-600/30 bg-sky-700/25 px-1.5 text-[0.65rem] font-semibold tracking-wide text-sky-100 uppercase transition-[background-color,border-color] duration-150 hover:border-sky-500/40 hover:bg-sky-600/35"
+      >
+        <FontAwesomeIcon icon={faCopy} className="text-xs" aria-hidden />
+        {copied ? 'Copiado' : 'Copiar'}
+      </button>
+    </div>
+  )
 }
 
 type Props = {
   alumnos: Alumno[]
   onChange: (id: string, patch: AlumnoPatch) => void
   canEditNivel: (nivel: Alumno['nivel']) => boolean
+  canValidar: boolean
 }
 
-export function AlumnosTable({ alumnos, onChange, canEditNivel }: Props) {
+export function AlumnosTable({
+  alumnos,
+  onChange,
+  canEditNivel,
+  canValidar,
+}: Props) {
   const [fichaAlumno, setFichaAlumno] = useState<Alumno | null>(null)
   const [containerW, setContainerW] = useState(1280)
   const [stickEnabled, setStickEnabled] = useState(
@@ -551,6 +627,7 @@ export function AlumnosTable({ alumnos, onChange, canEditNivel }: Props) {
                         alumno={alumno}
                         onChange={onChange}
                         editable={canEditNivel(alumno.nivel)}
+                        canValidar={canValidar}
                         onOpenFicha={() => setFichaAlumno(alumno)}
                       />
                     </td>

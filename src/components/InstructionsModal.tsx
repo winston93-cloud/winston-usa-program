@@ -72,9 +72,11 @@ export function InstructionsModal({ open, onClose }: Props) {
                 consulta; la captura operativa vive en la tabla.
               </li>
               <li>
-                Marque a mano Drive, Autorización CE y Validación final cuando
-                cada paso esté hecho. Cambie el <strong>Estado</strong> si hay
-                baja o reembolso.
+                Marque a mano Drive y, si es <strong>CE Primaria</strong>{' '}
+                (o Sistemas / Dir. Acad.), la Validación final. Con Validación
+                en Listo aparece <strong>Copiar</strong> (vista previa al
+                pasar el mouse) para pegar nombre, nacimiento y CURP en Excel.
+                Cambie el <strong>Estado</strong> si hay baja o reembolso.
               </li>
             </ol>
           </section>
@@ -117,19 +119,22 @@ export function InstructionsModal({ open, onClose }: Props) {
             <ul className="list-disc space-y-2 pl-5">
               <li>
                 <strong>Estado</strong> del alumno (Activo / Baja / Reembolso).
-                En baja, documente el caso en Observaciones (ficha).
+                Al marcar <strong>Baja</strong> se notifica a sistemas@ para
+                gestionar el reembolso. En baja, documente el caso en
+                Observaciones (ficha).
               </li>
               <li>
                 <strong>Drive:</strong> Carpeta, CURP y Boletas (marque cuando
                 estén en Drive).
               </li>
               <li>
-                <strong>Cierre:</strong> Autorización CE y Validación final
-                (marque cuando Control Escolar y el archivo estén listos).
+                <strong>Cierre:</strong> Validación final (solo CE Primaria /
+                Sistemas / Dir. Acad.) y <strong>Copiar</strong> al Excel
+                externo.
               </li>
               <li>
-                Ancho de columnas: arrastre el borde derecho del encabezado si
-                necesita más espacio.
+                <strong>Acceso:</strong> Control Escolar por nivel, Dirección
+                académica y Sistemas (cuentas @winston93.edu.mx en allowlist).
               </li>
             </ul>
           </section>

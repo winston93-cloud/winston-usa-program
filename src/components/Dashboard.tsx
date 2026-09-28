@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
-import type { ChipFiltro, Nivel } from '../types/alumno'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { AlumnoPatch, ChipFiltro, Nivel } from '../types/alumno'
 import { chipCounts, filterAlumnos, kpis } from '../lib/pagos'
+import { notificarBajaReembolso } from '../lib/notificarBajaReembolso'
 import { useAlumnos } from '../store/alumnosStore'
 import { useAuth } from '../store/authStore'
 import { AlumnosTable } from './AlumnosTable'
@@ -19,7 +20,7 @@ export function Dashboard() {
     updateAlumno,
     syncFromPagos,
   } = useAlumnos()
-  const { session, logout, canEdit, isAdmin } = useAuth()
+  const { session, logout, canEdit, canValidar, isAdmin } = useAuth()
   const { pushToast } = useToast()
   const [nivel, setNivel] = useState<Nivel | 'Todos'>(() =>
     session?.nivelEditable ?? 'Todos',
@@ -50,6 +51,44 @@ export function Dashboard() {
     nivel !== 'Todos' &&
     session?.nivelEditable &&
     nivel !== session.nivelEditable
+
+  const onChangeAlumno = useCallback(
+    (id: string, patch: AlumnoPatch) => {
+      const prev = alumnos.find((a) => a.id === id)
+      updateAlumno(id, patch)
+      if (
+        patch.estado === 'Baja - gestionar devolución' &&
+        prev &&
+        prev.estado !== 'Baja - gestionar devolución'
+      ) {
+        void (async () => {
+          const result = await notificarBajaReembolso(
+            { ...prev, ...patch },
+            {
+              solicitadoPor:
+                session?.email ||
+                session?.nombre ||
+                session?.usuario ||
+                'Panel USA',
+            },
+          )
+          if (result.ok) {
+            pushToast(
+              `Baja notificada a sistemas@ para reembolso (${prev.folio || prev.nombreCompleto}).`,
+              'success',
+            )
+          } else {
+            pushToast(
+              result.error ??
+                'No se pudo notificar la baja a sistemas@. El cambio de estado sí se guardó.',
+              'error',
+            )
+          }
+        })()
+      }
+    },
+    [alumnos, updateAlumno, session, pushToast],
+  )
 
   return (
     <div className="flex h-dvh max-h-dvh flex-col overflow-hidden">
@@ -129,8 +168,9 @@ export function Dashboard() {
         />
         <AlumnosTable
           alumnos={visible}
-          onChange={updateAlumno}
+          onChange={onChangeAlumno}
           canEditNivel={canEdit}
+          canValidar={canValidar}
         />
       </main>
       <InstructionsModal

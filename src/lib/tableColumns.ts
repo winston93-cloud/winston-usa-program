@@ -20,8 +20,8 @@ export type ColumnId =
   | 'curpDrive'
   | 'boletas'
   | 'expediente'
-  | 'autorizacion'
   | 'validacion'
+  | 'copiarInfo'
   | 'fechaArchivo'
   | 'devolucionSn'
   | 'fechaDevolucion'
@@ -52,15 +52,15 @@ export const TABLE_COLUMNS: TableColumn[] = [
   { id: 'boletas', label: 'Boletas Drive', shortLabel: 'Boletas', weight: 4 },
   { id: 'expediente', label: 'Expediente', shortLabel: 'Expediente', weight: 6 },
   {
-    id: 'autorizacion',
-    label: 'Autorización CE',
-    shortLabel: 'Autorización',
-    weight: 4.5,
-  },
-  {
     id: 'validacion',
     label: 'Validación final',
     shortLabel: 'Validación',
+    weight: 4.5,
+  },
+  {
+    id: 'copiarInfo',
+    label: 'Copiar a Excel',
+    shortLabel: 'Copiar',
     weight: 4.5,
   },
   { id: 'devolucionSn', label: 'Devolución', shortLabel: 'Devolución', weight: 4.5 },
@@ -107,8 +107,8 @@ export const TABLE_INLINE_COLUMN_IDS: ColumnId[] = [
   'carpeta',
   'curpDrive',
   'boletas',
-  'autorizacion',
   'validacion',
+  'copiarInfo',
 ]
 
 export const DEFAULT_COL_WEIGHTS = Object.fromEntries(
@@ -151,7 +151,7 @@ export const COLUMN_GROUPS: ColumnGroup[] = [
   {
     id: 'cierre',
     label: 'Cierre',
-    columnIds: ['autorizacion', 'validacion'],
+    columnIds: ['validacion', 'copiarInfo'],
   },
   {
     id: 'devoluciones',
