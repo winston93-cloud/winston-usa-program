@@ -6,7 +6,15 @@ import {
   type FormEvent,
 } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faRightToBracket } from '@fortawesome/free-solid-svg-icons'
+import {
+  faArrowRight,
+  faCircleExclamation,
+  faEye,
+  faEyeSlash,
+  faLock,
+  faUser,
+} from '@fortawesome/free-solid-svg-icons'
+import logo from '../assets/logo_winston.png'
 import { useAuth } from '../store/authStore'
 import { insforge } from '../lib/insforge'
 
@@ -57,27 +65,27 @@ function GoogleMark() {
   return (
     <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden>
       <path
-        fill="#FFC107"
-        d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.3-.4-3.5z"
+        fill="#EA4335"
+        d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
       />
       <path
-        fill="#FF3D00"
-        d="M6.3 14.7l6.6 4.8C14.7 16.1 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"
+        fill="#4285F4"
+        d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
       />
       <path
-        fill="#4CAF50"
-        d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.3 35.3 26.8 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"
+        fill="#FBBC05"
+        d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
       />
       <path
-        fill="#1976D2"
-        d="M43.6 20.5H42V20H24v8h11.3c-1.1 3.2-3.5 5.8-6.5 7.3l.1.1 6.2 5.2C36.9 39.2 44 34 44 24c0-1.2-.1-2.3-.4-3.5z"
+        fill="#34A853"
+        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
       />
     </svg>
   )
 }
 
-const fieldClass =
-  'mt-1.5 min-h-11 w-full rounded-lg border border-brand-border bg-[#0d0e13] px-3 py-2.5 text-ink outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-ink-muted focus:border-brand-accent focus:ring-2 focus:ring-[var(--tone-accent-ring)]'
+const campo =
+  'field-input min-h-12 w-full rounded-xl py-3 pl-11 pr-4 text-base placeholder:text-ink-muted/50'
 
 export function LoginPage() {
   const { loginManual, loginGoogle, completeGoogleInsforgeSession } = useAuth()
@@ -85,6 +93,7 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [mostrarPass, setMostrarPass] = useState(false)
   const [googleReady, setGoogleReady] = useState(false)
   const finishingOAuth = useRef(false)
   const tokenClient = useRef<{
@@ -224,77 +233,109 @@ export function LoginPage() {
   }, [clientId])
 
   return (
-    <div className="login-shell flex min-h-dvh items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md rounded-xl border border-brand-border bg-[rgba(52,52,58,0.35)] p-6 shadow-[0_16px_48px_rgba(0,0,0,0.55)] backdrop-blur-xl sm:p-8">
-        <div className="mb-7 text-center">
-          <p className="font-display text-xs font-semibold tracking-[0.16em] text-ink-secondary uppercase">
-            Winston–Hökku Academy
-          </p>
-          <h1 className="font-display mt-2 text-2xl font-bold tracking-tight text-ink sm:text-3xl">
-            Programa USA
-          </h1>
-          <p className="mt-2 text-sm text-ink-muted">
-            Control de alumnos · acceso institucional
-          </p>
-        </div>
+    <div className="flex min-h-dvh flex-col">
+      <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-10">
+        <form
+          onSubmit={onSubmit}
+          className="surface-card rounded-2xl p-6 shadow-[0_16px_48px_rgba(0,0,0,0.45)] sm:p-8"
+          noValidate
+        >
+          <div className="mb-8 flex flex-col items-center text-center">
+            <img src={logo} alt="Winston" className="h-14 w-auto" />
+            <h1 className="font-display mt-5 text-3xl font-bold tracking-tight text-gold">
+              Programa USA
+            </h1>
+            <p className="mt-2 text-sm text-ink-muted">
+              Control de alumnos, pagos y documentación
+            </p>
+          </div>
 
-        <form onSubmit={onSubmit} className="space-y-4" noValidate>
-          <label className="block text-sm font-medium text-ink-secondary">
-            Correo o usuario
-            <input
-              type="text"
-              autoComplete="username"
-              value={login}
-              onChange={(e) => setLogin(e.target.value)}
-              className={fieldClass}
-              required
-            />
+          <label className="flex flex-col gap-2 text-xs font-semibold tracking-wide text-ink-muted uppercase">
+            Usuario
+            <span className="relative">
+              <FontAwesomeIcon
+                icon={faUser}
+                className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-sm text-ink-muted"
+                aria-hidden
+              />
+              <input
+                type="text"
+                autoComplete="username"
+                value={login}
+                onChange={(e) => setLogin(e.target.value)}
+                placeholder="Usuario"
+                className={`${campo} font-normal normal-case`}
+                required
+              />
+            </span>
           </label>
-          <label className="block text-sm font-medium text-ink-secondary">
+
+          <label className="mt-4 flex flex-col gap-2 text-xs font-semibold tracking-wide text-ink-muted uppercase">
             Contraseña
-            <input
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={fieldClass}
-              required
-            />
+            <span className="relative">
+              <FontAwesomeIcon
+                icon={faLock}
+                className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-sm text-ink-muted"
+                aria-hidden
+              />
+              <input
+                type={mostrarPass ? 'text' : 'password'}
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Contraseña"
+                className={`${campo} pr-11 font-normal normal-case`}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setMostrarPass((v) => !v)}
+                aria-label={
+                  mostrarPass ? 'Ocultar contraseña' : 'Mostrar contraseña'
+                }
+                className="absolute top-1/2 right-2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-ink-muted hover:text-gold"
+              >
+                <FontAwesomeIcon
+                  icon={mostrarPass ? faEyeSlash : faEye}
+                  aria-hidden
+                />
+              </button>
+            </span>
           </label>
+
           {error ? (
-            <p
-              role="alert"
-              className="rounded-lg border border-estado-baja-border/40 bg-estado-baja-input/50 px-3 py-2.5 text-sm text-estado-baja-text"
-            >
-              {error}
+            <p className="mt-4 flex items-start gap-2 text-sm text-baja-text">
+              <FontAwesomeIcon
+                icon={faCircleExclamation}
+                className="mt-0.5"
+                aria-hidden
+              />
+              <span>{error}</span>
             </p>
           ) : null}
+
           <button
             type="submit"
             disabled={busy}
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-sky-600/30 bg-sky-700/25 px-4 py-2.5 text-sm font-semibold text-sky-100 transition-[background-color,border-color,opacity] duration-150 hover:border-sky-500/40 hover:bg-sky-600/35 disabled:cursor-wait disabled:opacity-60"
+            className="btn-accent mt-6 min-h-12 w-full rounded-xl text-base disabled:cursor-wait disabled:opacity-60"
           >
-            <FontAwesomeIcon icon={faRightToBracket} aria-hidden />
             {busy ? 'Entrando…' : 'Entrar'}
+            <FontAwesomeIcon icon={faArrowRight} className="text-sm" aria-hidden />
+          </button>
+
+          <p className="my-4 text-center text-sm text-ink-muted">o</p>
+
+          <button
+            type="button"
+            disabled={busy || !googleReady}
+            onClick={onGoogle}
+            className="flex min-h-12 w-full items-center justify-center gap-3 rounded-xl bg-white text-base font-medium text-black/80 transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <GoogleMark />
+            {busy ? 'Conectando…' : 'Continuar con Google'}
           </button>
         </form>
-
-        <div className="my-5 flex items-center gap-3 text-xs text-ink-muted">
-          <span className="h-px flex-1 bg-brand-border" />
-          o
-          <span className="h-px flex-1 bg-brand-border" />
-        </div>
-
-        <button
-          type="button"
-          disabled={busy || !googleReady}
-          onClick={onGoogle}
-          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-brand-border bg-white/95 px-4 py-2.5 text-sm font-semibold text-slate-800 transition-[background-color,opacity] duration-150 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <GoogleMark />
-          {busy ? 'Conectando…' : 'Continuar con Google'}
-        </button>
-      </div>
+      </main>
     </div>
   )
 }

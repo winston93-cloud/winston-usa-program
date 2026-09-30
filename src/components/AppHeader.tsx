@@ -4,6 +4,7 @@ import {
   faRightFromBracket,
   faRotate,
 } from '@fortawesome/free-solid-svg-icons'
+import logo from '../assets/logo_winston.png'
 import { CICLO_ESCOLAR, CUOTA_ANUAL_USD, formatUsd } from '../lib/constants'
 import { shortSessionName, type UsaSession } from '../lib/authAccess'
 import { NIVELES, type Nivel } from '../types/alumno'
@@ -19,12 +20,12 @@ type Props = {
   canSync?: boolean
 }
 
-/** Controles del header: mismo alto (salvo título/subtítulo). Texto secundario en azul opaco. */
+/** Controles del header: estilo qr-entrada (cream / borde sutil). */
 const chrome =
-  'inline-flex h-10 items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 text-sm font-semibold text-sky-200/85 transition-[background-color,color] duration-150 hover:bg-white/15 hover:text-sky-100'
+  'inline-flex h-10 items-center gap-2 rounded-xl border border-brand-border bg-brand px-3 text-sm font-semibold text-gold transition-[border-color,background-color] duration-150 hover:border-[rgba(0,227,253,0.18)]'
 
 const iconBtn =
-  'inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-sky-200/85 transition-[background-color,color] duration-150 hover:bg-white/15 hover:text-sky-100 disabled:cursor-wait disabled:opacity-60'
+  'inline-flex size-10 shrink-0 items-center justify-center rounded-xl border border-brand-border bg-brand text-gold transition-[border-color] duration-150 hover:border-[rgba(0,227,253,0.18)] disabled:cursor-wait disabled:opacity-60'
 
 export function AppHeader({
   onHelp,
@@ -39,20 +40,23 @@ export function AppHeader({
   const nombreCorto = shortSessionName(session)
 
   return (
-    <header className="shrink-0 border-b border-brand-border bg-[rgba(26,27,33,0.78)] text-on-brand shadow-[0_4px_24px_rgba(0,0,0,0.4)] backdrop-blur-xl">
+    <header className="surface-header shrink-0 border-b border-brand-border bg-[rgba(26,27,33,0.82)] text-on-brand backdrop-blur-xl">
       <div className="mx-auto flex w-full flex-wrap items-center justify-between gap-3 px-3 py-3 sm:gap-3 sm:px-5">
-        <div className="min-w-0 flex-1">
-          <h1 className="font-display text-lg leading-tight font-bold tracking-tight text-ink sm:text-xl">
-            PROGRAMA WINSTON–HÖKKU ACADEMY
-          </h1>
-          <p className="mt-0.5 text-[0.7rem] font-semibold tracking-[0.14em] text-ink-muted uppercase sm:text-xs sm:tracking-[0.16em]">
-            Ciclo escolar {CICLO_ESCOLAR}
-          </p>
+        <div className="flex min-w-0 flex-1 items-center gap-5">
+          <img src={logo} alt="Winston" className="h-10 w-auto shrink-0 sm:h-12" />
+          <div className="min-w-0">
+            <h1 className="font-display text-lg leading-tight font-bold tracking-tight text-gold sm:text-xl">
+              PROGRAMA USA
+            </h1>
+            <p className="mt-0.5 text-[0.7rem] font-semibold tracking-[0.14em] text-ink-muted uppercase sm:text-xs sm:tracking-[0.16em]">
+              Ciclo escolar {CICLO_ESCOLAR}
+            </p>
+          </div>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <p className={`hidden md:inline-flex ${chrome}`}>
             Cuota anual:{' '}
-            <span className="font-semibold tabular-nums text-sky-100">
+            <span className="font-semibold tabular-nums text-gold">
               {formatUsd(CUOTA_ANUAL_USD)}
             </span>
           </p>
@@ -62,7 +66,7 @@ export function AppHeader({
             <select
               value={nivel}
               onChange={(e) => onNivel(e.target.value as Nivel | 'Todos')}
-              className="h-7 rounded-md border border-white/20 bg-[#0d0e13] px-2 text-sm font-medium text-sky-100 normal-case outline-none focus:ring-2 focus:ring-white/25"
+              className="h-7 rounded-md border border-brand-border bg-[#0d0e13] px-2 text-sm font-medium text-ink normal-case outline-none focus:border-[rgba(0,227,253,0.35)]"
             >
               <option value="Todos">Todos</option>
               {NIVELES.map((n) => (
@@ -101,15 +105,13 @@ export function AppHeader({
           </button>
 
           <div
-            className="inline-flex h-10 max-w-[8.5rem] flex-col justify-center rounded-lg border border-white/10 bg-white/10 px-3"
+            className="inline-flex h-10 max-w-[8.5rem] flex-col justify-center rounded-xl border border-brand-border bg-brand px-3"
             title={`${session.label} · ${session.nombre} · ${session.email}`}
           >
-            <span className="truncate text-[0.65rem] font-semibold tracking-wide text-sky-200/70 uppercase">
+            <span className="truncate text-[0.65rem] font-semibold tracking-wide text-ink-muted uppercase">
               {session.label}
             </span>
-            <span className="truncate text-sm font-semibold text-sky-100">
-              {nombreCorto}
-            </span>
+            <span className="truncate text-sm font-semibold text-gold">{nombreCorto}</span>
           </div>
           <button
             type="button"
