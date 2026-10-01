@@ -2,61 +2,87 @@
 
 /*
   =============================================================================
-  Totality Festival + Impeccable (Winston USA Program)
-  Obsidiana · corona dorada · cian etéreo — claridad operativa.
-  Ref: servicios_admin pos-totality-theme / .impeccable.md
+  Winston USA Program — tokens alineados con qr-entrada (ERP azul oscuro)
+  Editar :root para cambiar el sistema entero.
   =============================================================================
 */
 
 :root {
-  --tone-soft: #121318;
-  --tone-deep: #1a1b21;
-  --tone-brand: rgba(26, 27, 33, 0.92);
-  --tone-accent: #00e3fd;
-  --tone-accent-hover: #bdf4ff;
-  --tone-accent-ring: rgba(0, 227, 253, 0.35);
-  --tone-gold: #fff6df;
-  --tone-gold-bright: #ffd700;
-  --tone-gold-on: #3a3000;
-  --tone-border: rgba(255, 255, 255, 0.1);
-  --tone-border-mid: rgba(153, 144, 119, 0.35);
-  --tone-cell: #1a1b21;
-  --tone-sec-white: #1a1b21;
-  --tone-sec-blue: #1a1b21;
-  --tone-sec-bar-muted: #1a1b21;
-  --tone-sec-white-head: #292a2f;
-  --tone-sec-blue-head: #292a2f;
-  --tone-tint: #0d0e13;
-  --tone-white: #292a2f;
-  --tone-ink: #e3e1e9;
-  --tone-ink-muted: #999077;
-  --tone-ink-secondary: #d0c6ab;
-  --tone-select-bg: #0d0e13;
+  /* Superficies (navy profundo) */
+  --tone-soft: #080e18;
+  --tone-deep: #101827;
+  --tone-brand: rgba(16, 24, 39, 0.92);
+  --tone-aside: #0c1422;
+  --tone-panel-2: #152033;
+  --tone-tint: #080e18;
+  --tone-select-bg: #080e18;
+  --tone-cell: #101827;
+  --tone-sec-white: #101827;
+  --tone-sec-blue: #101827;
+  --tone-sec-bar-muted: #101827;
+  --tone-sec-white-head: #152033;
+  --tone-sec-blue-head: #152033;
+  --tone-white: #152033;
 
-  --tone-mark-green: rgba(12, 131, 55, 0.80);
-  --tone-mark-blue: rgba(3, 105, 161, 0.55);
+  /* Acentos */
+  --tone-accent: #3db8e8;
+  --tone-accent-rgb: 61, 184, 232;
+  --tone-accent-2: #5b7cfa;
+  --tone-accent-2-rgb: 91, 124, 250;
+  --tone-accent-hover: #7dd3f0;
+  --tone-accent-ring: rgba(var(--tone-accent-rgb), 0.28);
+  --tone-accent-fill: rgba(var(--tone-accent-rgb), 0.1);
+  --tone-accent-fill-hover: rgba(var(--tone-accent-rgb), 0.16);
+  --tone-accent-2-fill: rgba(var(--tone-accent-2-rgb), 0.1);
+
+  /* Texto / marca */
+  --tone-gold: #eef3fb;
+  --tone-gold-bright: #c9a84c;
+  --tone-gold-rgb: 201, 168, 76;
+  --tone-gold-on: #2a2208;
+  --tone-ink: #e6eaf2;
+  --tone-ink-muted: #8b93a7;
+  --tone-ink-secondary: #b8c0d0;
+
+  /* Bordes discretos */
+  --tone-border: rgba(148, 163, 184, 0.11);
+  --tone-border-mid: rgba(148, 163, 184, 0.2);
+  --tone-border-strong: rgba(148, 163, 184, 0.18);
+
+  /* Semántica (sin cambios de intención) */
+  --tone-mark-green: rgba(12, 131, 55, 0.8);
+  --tone-mark-blue: rgba(91, 124, 250, 0.45);
   --tone-mark-red: rgba(239, 68, 68, 0.35);
   --tone-mark-gray: #3f3f46;
-  --tone-mark-pending-bg: rgba(255, 255, 255, 0.06);
-  --tone-mark-pending-fg: rgba(227, 225, 233, 0.22);
+  --tone-mark-pending-bg: rgba(255, 255, 255, 0.05);
+  --tone-mark-pending-fg: rgba(230, 234, 242, 0.22);
   --tone-mark-on: #ffffff;
+
+  /* Fondo + textura */
+  --bg-atmosphere:
+    radial-gradient(ellipse at 40% -10%, rgba(var(--tone-accent-rgb), 0.055), transparent 52%),
+    radial-gradient(ellipse at 100% 80%, rgba(var(--tone-accent-2-rgb), 0.04), transparent 46%),
+    radial-gradient(ellipse at 0% 100%, rgba(var(--tone-gold-rgb), 0.025), transparent 42%);
+  --bg-grid-opacity: 0.028;
+  --bg-grid-size: 44px;
+  --bg-grid-line: rgba(180, 190, 210, 0.7);
 
   --motion-fast: 120ms;
   --motion-base: 180ms;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 
-  --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.35);
+  --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.38);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.55);
-  --shadow-glow: 0 0 28px rgba(0, 227, 253, 0.12);
+  --shadow-lg: 0 14px 42px rgba(0, 0, 0, 0.42);
+  --shadow-glow: 0 0 28px rgba(var(--tone-accent-rgb), 0.06);
 }
 
 @theme {
   --font-sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
   --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
 
-  --color-brand: #1a1b21;
-  --color-brand-hover: var(--tone-deep);
+  --color-brand: var(--tone-deep);
+  --color-brand-hover: var(--tone-panel-2);
   --color-brand-accent: var(--tone-accent);
   --color-brand-accent-hover: var(--tone-accent-hover);
   --color-brand-soft: var(--tone-soft);
@@ -72,8 +98,8 @@
 
   --color-ink: var(--tone-ink);
   --color-ink-muted: var(--tone-ink-muted);
-  --color-on-brand: #e3e1e9;
-  --color-on-brand-muted: rgba(227, 225, 233, 0.72);
+  --color-on-brand: var(--tone-ink);
+  --color-on-brand-muted: rgba(230, 234, 242, 0.72);
 
   --color-cell: var(--tone-cell);
   --color-cell-calc: var(--tone-tint);
@@ -97,10 +123,10 @@
 
   --color-estado-reembolso-cell: transparent;
   --color-estado-reembolso-input: #1a2834;
-  --color-estado-reembolso-border: #999077;
-  --color-estado-reembolso-text: #d0c6ab;
+  --color-estado-reembolso-border: var(--tone-ink-muted);
+  --color-estado-reembolso-text: var(--tone-ink-secondary);
 
-  --color-chip-base: #292a2f;
+  --color-chip-base: var(--tone-white);
   --color-chip-activos: #14532d;
   --color-chip-devoluciones: #5f2436;
   --color-chip-recaudado: #86efac;
@@ -113,7 +139,7 @@
   --color-sec-white-head: var(--tone-sec-white-head);
   --color-sec-blue: var(--tone-sec-blue);
   --color-sec-blue-head: var(--tone-sec-blue-head);
-  --color-sec-bar: #0d0e13;
+  --color-sec-bar: var(--tone-soft);
   --color-sec-bar-text: var(--tone-gold);
   --color-sec-bar-muted: var(--tone-sec-bar-muted);
 
@@ -149,9 +175,7 @@ body {
   -webkit-text-size-adjust: 100%;
   touch-action: manipulation;
   background-color: var(--tone-soft);
-  background-image:
-    radial-gradient(ellipse at 50% 0%, rgba(0, 227, 253, 0.055), transparent 55%),
-    radial-gradient(ellipse at 85% 100%, rgba(255, 215, 0, 0.028), transparent 45%);
+  background-image: var(--bg-atmosphere);
   background-attachment: fixed;
 }
 
@@ -161,11 +185,11 @@ body::before {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  opacity: 0.016;
+  opacity: var(--bg-grid-opacity);
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.7) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.7) 1px, transparent 1px);
-  background-size: 48px 48px;
+    linear-gradient(var(--bg-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bg-grid-line) 1px, transparent 1px);
+  background-size: var(--bg-grid-size) var(--bg-grid-size);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -187,7 +211,7 @@ body::before {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(153, 144, 119, 0.45) transparent;
+  scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
 }
 
 *::-webkit-scrollbar {
@@ -200,7 +224,7 @@ body::before {
 }
 
 *::-webkit-scrollbar-thumb {
-  background: rgba(153, 144, 119, 0.45);
+  background: rgba(148, 163, 184, 0.35);
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: content-box;
@@ -247,12 +271,14 @@ input[type='date']::-webkit-calendar-picker-indicator {
 
 .surface-header {
   border-color: var(--tone-border);
+  background: rgba(12, 20, 34, 0.92);
 }
 
 .surface-card {
   border: 1px solid var(--tone-border);
-  background: rgba(26, 27, 33, 0.78);
+  background: rgba(16, 24, 39, 0.88);
   backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-lg);
 }
 
 .btn-accent {
@@ -264,17 +290,17 @@ input[type='date']::-webkit-calendar-picker-indicator {
   font-weight: 600;
   color: var(--tone-gold);
   border: 1px solid var(--tone-accent-ring);
-  background: rgba(0, 227, 253, 0.12);
+  background: var(--tone-accent-fill);
   transition: background-color 0.15s ease;
 }
 
 .btn-accent:hover:not(:disabled) {
-  background: rgba(0, 227, 253, 0.2);
+  background: var(--tone-accent-fill-hover);
 }
 
 .field-input {
   border: 1px solid var(--tone-border);
-  background: rgba(18, 19, 24, 0.72);
+  background: rgba(8, 14, 24, 0.82);
   color: var(--tone-ink);
   outline: none;
   transition: border-color 0.15s ease;
@@ -285,9 +311,9 @@ input[type='date']::-webkit-calendar-picker-indicator {
 }
 
 .btn-totality-primary {
-  background: linear-gradient(135deg, #fff6df 0%, #ffd700 100%);
+  background: linear-gradient(135deg, var(--tone-gold) 0%, var(--tone-gold-bright) 100%);
   color: var(--tone-gold-on);
-  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.2);
+  box-shadow: 0 4px 20px rgba(var(--tone-gold-rgb), 0.2);
 }
 
 .btn-totality-primary:hover:not(:disabled) {

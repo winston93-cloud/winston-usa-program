@@ -338,7 +338,7 @@ function CopyExcelCell({ alumno }: { alumno: Alumno }) {
     <div className="group relative flex h-full min-h-9 w-full items-center justify-center px-0.5">
       <div
         role="tooltip"
-        className="pointer-events-none absolute bottom-[calc(100%+0.35rem)] left-1/2 z-50 hidden w-max max-w-[14rem] -translate-x-1/2 rounded-lg border border-sky-600/30 bg-[#0d0e13] px-2.5 py-2 text-left shadow-[0_8px_24px_rgba(0,0,0,0.45)] group-hover:block group-focus-within:block"
+        className="pointer-events-none absolute bottom-[calc(100%+0.35rem)] left-1/2 z-50 hidden w-max max-w-[14rem] -translate-x-1/2 rounded-lg border border-brand-border bg-brand-soft px-2.5 py-2 text-left shadow-lg group-hover:block group-focus-within:block"
       >
         <p className="mb-1 text-[0.6rem] font-semibold tracking-wide text-sky-200/70 uppercase">
           Vista previa · Excel

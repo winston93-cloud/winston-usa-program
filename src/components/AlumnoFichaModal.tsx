@@ -32,7 +32,7 @@ function Section({
 }) {
   return (
     <section className="border-b border-brand-border last:border-b-0">
-      <h3 className="bg-[#0d0e13] px-4 py-2 font-display text-[0.7rem] font-semibold tracking-[0.14em] text-gold uppercase sm:px-5">
+      <h3 className="bg-brand-soft px-4 py-2 font-display text-[0.7rem] font-semibold tracking-[0.14em] text-gold uppercase sm:px-5">
         {title}
       </h3>
       <div className="grid gap-0 sm:grid-cols-2 ">{children}</div>

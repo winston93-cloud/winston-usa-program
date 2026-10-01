@@ -66,7 +66,7 @@ export function AppHeader({
             <select
               value={nivel}
               onChange={(e) => onNivel(e.target.value as Nivel | 'Todos')}
-              className="h-7 rounded-md border border-brand-border bg-[#0d0e13] px-2 text-sm font-medium text-ink normal-case outline-none focus:border-[rgba(0,227,253,0.35)]"
+              className="h-7 rounded-md border border-brand-border bg-brand-soft px-2 text-sm font-medium text-ink normal-case outline-none focus:border-focus-ring"
             >
               <option value="Todos">Todos</option>
               {NIVELES.map((n) => (
