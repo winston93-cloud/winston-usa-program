@@ -29,7 +29,7 @@ type Body = {
   folio?: string
   filename?: string
   pdfBase64?: string
-  /** Solo modo padre: notificar también a CE (default false hasta habilitar). */
+  /** Solo modo padre: notificar también a CE del nivel. */
   notificarCe?: boolean
 }
 

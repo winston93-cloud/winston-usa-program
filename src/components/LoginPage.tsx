@@ -85,7 +85,7 @@ function GoogleMark() {
 }
 
 const campo =
-  'field-input min-h-12 w-full rounded-xl py-3 pl-11 pr-4 text-base placeholder:text-ink-muted/50'
+  'field-input min-h-12 w-full rounded-xl py-3 pl-11 pr-4 text-base placeholder:text-ink-muted/50 font-normal normal-case'
 
 export function LoginPage() {
   const { loginManual, loginGoogle, completeGoogleInsforgeSession } = useAuth()
@@ -237,16 +237,16 @@ export function LoginPage() {
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-10">
         <form
           onSubmit={onSubmit}
-          className="surface-card rounded-2xl p-6 shadow-[0_16px_48px_rgba(0,0,0,0.45)] sm:p-8"
+          className="surface-card rounded-2xl p-6 shadow-soft sm:p-8"
           noValidate
         >
           <div className="mb-8 flex flex-col items-center text-center">
-            <img src={logo} alt="Winston" className="h-14 w-auto" />
-            <h1 className="font-display mt-5 text-3xl font-bold tracking-tight text-gold">
+            <img src={logo} alt="Winston" className="h-16 w-auto" />
+            <h1 className="font-display mt-5 text-3xl font-bold tracking-tight text-title sm:text-4xl">
               Programa USA
             </h1>
             <p className="mt-2 text-sm text-ink-muted">
-              Control de alumnos, pagos y documentación
+              Control de alumnos, pagos y documentación del viaje
             </p>
           </div>
 
@@ -264,7 +264,7 @@ export function LoginPage() {
                 value={login}
                 onChange={(e) => setLogin(e.target.value)}
                 placeholder="Usuario"
-                className={`${campo} font-normal normal-case`}
+                className={campo}
                 required
               />
             </span>
@@ -284,7 +284,7 @@ export function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Contraseña"
-                className={`${campo} pr-11 font-normal normal-case`}
+                className={`${campo} pr-11`}
                 required
               />
               <button
@@ -293,7 +293,7 @@ export function LoginPage() {
                 aria-label={
                   mostrarPass ? 'Ocultar contraseña' : 'Mostrar contraseña'
                 }
-                className="absolute top-1/2 right-2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-ink-muted hover:text-gold"
+                className="absolute top-1/2 right-2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-ink-muted hover:text-cream"
               >
                 <FontAwesomeIcon
                   icon={mostrarPass ? faEyeSlash : faEye}

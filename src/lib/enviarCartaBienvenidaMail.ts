@@ -96,6 +96,8 @@ export async function enviarCartaBienvenidaPorCorreo(
       folio: alumno.folio,
       filename,
       pdfBase64: bytesToBase64(bytes),
+      // Producción ciclo actual: aviso a Control Escolar del nivel.
+      notificarCe: modo === 'padre',
     }),
   })
 

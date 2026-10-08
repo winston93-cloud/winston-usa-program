@@ -20,12 +20,12 @@ type Props = {
   canSync?: boolean
 }
 
-/** Controles del header: estilo qr-entrada (cream / borde sutil). */
+/** Mismo chip que el bloque de usuario (accent-2 fill). */
 const chrome =
-  'inline-flex h-10 items-center gap-2 rounded-xl border border-brand-border bg-brand px-3 text-sm font-semibold text-gold transition-[border-color,background-color] duration-150 hover:border-[rgba(0,227,253,0.18)]'
+  'inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--tone-border-strong)] bg-[rgba(122,147,247,0.2)] px-3 text-sm font-semibold text-title transition-[border-color,background-color] duration-150 hover:border-[var(--tone-accent-ring)] hover:bg-[rgba(122,147,247,0.3)]'
 
 const iconBtn =
-  'inline-flex size-10 shrink-0 items-center justify-center rounded-xl border border-brand-border bg-brand text-gold transition-[border-color] duration-150 hover:border-[rgba(0,227,253,0.18)] disabled:cursor-wait disabled:opacity-60'
+  'inline-flex size-10 shrink-0 items-center justify-center rounded-xl border border-[var(--tone-border-strong)] bg-[rgba(122,147,247,0.2)] text-title transition-[border-color,background-color] duration-150 hover:border-[var(--tone-accent-ring)] hover:bg-[rgba(122,147,247,0.3)] disabled:cursor-wait disabled:opacity-60'
 
 export function AppHeader({
   onHelp,
@@ -40,12 +40,12 @@ export function AppHeader({
   const nombreCorto = shortSessionName(session)
 
   return (
-    <header className="surface-header shrink-0 border-b border-brand-border bg-[rgba(26,27,33,0.82)] text-on-brand backdrop-blur-xl">
+    <header className="surface-header shrink-0 border-b text-on-brand backdrop-blur-xl">
       <div className="mx-auto flex w-full flex-wrap items-center justify-between gap-3 px-3 py-3 sm:gap-3 sm:px-5">
         <div className="flex min-w-0 flex-1 items-center gap-5">
           <img src={logo} alt="Winston" className="h-10 w-auto shrink-0 sm:h-12" />
           <div className="min-w-0">
-            <h1 className="font-display text-lg leading-tight font-bold tracking-tight text-gold sm:text-xl">
+            <h1 className="font-display text-lg leading-tight font-bold tracking-tight text-title sm:text-xl">
               PROGRAMA USA
             </h1>
             <p className="mt-0.5 text-[0.7rem] font-semibold tracking-[0.14em] text-ink-muted uppercase sm:text-xs sm:tracking-[0.16em]">
@@ -56,7 +56,7 @@ export function AppHeader({
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <p className={`hidden md:inline-flex ${chrome}`}>
             Cuota anual:{' '}
-            <span className="font-semibold tabular-nums text-gold">
+            <span className="font-semibold tabular-nums text-title">
               {formatUsd(CUOTA_ANUAL_USD)}
             </span>
           </p>
@@ -66,7 +66,7 @@ export function AppHeader({
             <select
               value={nivel}
               onChange={(e) => onNivel(e.target.value as Nivel | 'Todos')}
-              className="h-7 rounded-md border border-brand-border bg-brand-soft px-2 text-sm font-medium text-ink normal-case outline-none focus:border-focus-ring"
+              className="h-7 rounded-md border border-[var(--tone-border-strong)] bg-[rgba(16,24,38,0.55)] px-2 text-sm font-medium text-title normal-case outline-none focus:border-[var(--tone-accent)]"
             >
               <option value="Todos">Todos</option>
               {NIVELES.map((n) => (
@@ -105,13 +105,15 @@ export function AppHeader({
           </button>
 
           <div
-            className="inline-flex h-10 max-w-[8.5rem] flex-col justify-center rounded-xl border border-brand-border bg-brand px-3"
+            className={`${chrome} max-w-[8.5rem] flex-col justify-center gap-0!`}
             title={`${session.label} · ${session.nombre} · ${session.email}`}
           >
             <span className="truncate text-[0.65rem] font-semibold tracking-wide text-ink-muted uppercase">
               {session.label}
             </span>
-            <span className="truncate text-sm font-semibold text-gold">{nombreCorto}</span>
+            <span className="truncate text-sm font-semibold text-title">
+              {nombreCorto}
+            </span>
           </div>
           <button
             type="button"

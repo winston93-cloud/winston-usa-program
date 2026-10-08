@@ -1,5 +1,5 @@
 /** Vencimientos USA Program (calendario de la carta de bienvenida). */
-export const ANIO_VENCIMIENTOS_USA = 2025
+export const ANIO_VENCIMIENTOS_USA = 2026
 
 export type ParcialidadPago = 1 | 2 | 3
 

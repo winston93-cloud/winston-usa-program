@@ -2,79 +2,84 @@
 
 /*
   =============================================================================
-  Winston USA Program — tokens alineados con qr-entrada (ERP azul oscuro)
-  Editar :root para cambiar el sistema entero.
+  Winston USA Program — tokens alineados con qr-entrada (slate navy legible)
   =============================================================================
 */
 
 :root {
-  /* Superficies (navy profundo) */
-  --tone-soft: #080e18;
-  --tone-deep: #101827;
-  --tone-brand: rgba(16, 24, 39, 0.92);
-  --tone-aside: #0c1422;
-  --tone-panel-2: #152033;
-  --tone-tint: #080e18;
-  --tone-select-bg: #080e18;
-  --tone-cell: #101827;
-  --tone-sec-white: #101827;
-  --tone-sec-blue: #101827;
-  --tone-sec-bar-muted: #101827;
-  --tone-sec-white-head: #152033;
-  --tone-sec-blue-head: #152033;
-  --tone-white: #152033;
+  /* Texto */
+  --tone-ink: #eef2f9;
+  --tone-ink-muted: #b0b9cb;
+  --tone-ink-secondary: #c8d0e0;
+  --tone-title: #ffffff;
+  --tone-cream: #f8fafc;
 
   /* Acentos */
-  --tone-accent: #3db8e8;
-  --tone-accent-rgb: 61, 184, 232;
-  --tone-accent-2: #5b7cfa;
-  --tone-accent-2-rgb: 91, 124, 250;
-  --tone-accent-hover: #7dd3f0;
-  --tone-accent-ring: rgba(var(--tone-accent-rgb), 0.28);
-  --tone-accent-fill: rgba(var(--tone-accent-rgb), 0.1);
-  --tone-accent-fill-hover: rgba(var(--tone-accent-rgb), 0.16);
-  --tone-accent-2-fill: rgba(var(--tone-accent-2-rgb), 0.1);
-
-  /* Texto / marca */
-  --tone-gold: #eef3fb;
-  --tone-gold-bright: #c9a84c;
-  --tone-gold-rgb: 201, 168, 76;
+  --tone-gold: #dbb85f;
+  --tone-gold-bright: #dbb85f;
+  --tone-gold-rgb: 219, 184, 95;
   --tone-gold-on: #2a2208;
-  --tone-ink: #e6eaf2;
-  --tone-ink-muted: #8b93a7;
-  --tone-ink-secondary: #b8c0d0;
+  --tone-accent: #35c4e8;
+  --tone-accent-rgb: 53, 196, 232;
+  --tone-accent-2: #7a93f7;
+  --tone-accent-2-rgb: 122, 147, 247;
+  --tone-accent-hover: #5dd0ee;
+  --tone-accent-ring: rgba(var(--tone-accent-rgb), 0.5);
+  --tone-accent-fill: rgba(var(--tone-accent-rgb), 0.22);
+  --tone-accent-fill-hover: rgba(var(--tone-accent-rgb), 0.34);
+  --tone-accent-2-fill: rgba(var(--tone-accent-2-rgb), 0.2);
 
-  /* Bordes discretos */
-  --tone-border: rgba(148, 163, 184, 0.11);
-  --tone-border-mid: rgba(148, 163, 184, 0.2);
-  --tone-border-strong: rgba(148, 163, 184, 0.18);
+  /* Fondos: slate navy */
+  --tone-soft: #121c2e;
+  --tone-deep: #24334d;
+  --tone-brand: rgba(26, 39, 60, 0.96);
+  --tone-aside: #182538;
+  --tone-panel-2: #1d2940;
+  --tone-tint: #101826;
+  --tone-select-bg: #101826;
+  --tone-cell: #24334d;
+  --tone-sec-white: #24334d;
+  --tone-sec-blue: #24334d;
+  --tone-sec-bar-muted: #24334d;
+  --tone-sec-white-head: rgba(122, 147, 247, 0.14);
+  --tone-sec-blue-head: rgba(122, 147, 247, 0.14);
+  --tone-white: #24334d;
 
-  /* Semántica (sin cambios de intención) */
+  /* Bordes */
+  --tone-border: rgba(186, 198, 220, 0.28);
+  --tone-border-mid: rgba(186, 198, 220, 0.36);
+  --tone-border-strong: rgba(186, 198, 220, 0.44);
+
+  /* Superficies */
+  --surface-header: rgba(26, 39, 60, 0.96);
+  --surface-card: rgba(34, 48, 73, 0.98);
+  --surface-aside: rgba(26, 39, 60, 0.99);
+  --surface-input: rgba(16, 24, 38, 0.92);
+  --surface-panel: #24334d;
+
+  /* Semántica de tabla (dominio USA) */
   --tone-mark-green: rgba(12, 131, 55, 0.8);
-  --tone-mark-blue: rgba(91, 124, 250, 0.45);
-  --tone-mark-red: rgba(239, 68, 68, 0.35);
-  --tone-mark-gray: #3f3f46;
+  --tone-mark-blue: rgba(122, 147, 247, 0.45);
+  --tone-mark-red: rgba(239, 116, 102, 0.4);
+  --tone-mark-gray: #3f4a5c;
   --tone-mark-pending-bg: rgba(255, 255, 255, 0.05);
-  --tone-mark-pending-fg: rgba(230, 234, 242, 0.22);
+  --tone-mark-pending-fg: rgba(238, 242, 249, 0.22);
   --tone-mark-on: #ffffff;
 
-  /* Fondo + textura */
-  --bg-atmosphere:
-    radial-gradient(ellipse at 40% -10%, rgba(var(--tone-accent-rgb), 0.055), transparent 52%),
-    radial-gradient(ellipse at 100% 80%, rgba(var(--tone-accent-2-rgb), 0.04), transparent 46%),
-    radial-gradient(ellipse at 0% 100%, rgba(var(--tone-gold-rgb), 0.025), transparent 42%);
-  --bg-grid-opacity: 0.028;
-  --bg-grid-size: 44px;
-  --bg-grid-line: rgba(180, 190, 210, 0.7);
+  --bg-atmosphere: linear-gradient(165deg, #1a2940 0%, #121c2e 42%, #0e1624 100%);
+  --bg-grid-opacity: 0.045;
+  --bg-grid-size: 48px;
+  --bg-grid-line: rgba(200, 210, 230, 0.5);
 
   --motion-fast: 120ms;
   --motion-base: 180ms;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 
-  --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.38);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 14px 42px rgba(0, 0, 0, 0.42);
-  --shadow-glow: 0 0 28px rgba(var(--tone-accent-rgb), 0.06);
+  --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.28);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.32);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.32);
+  --shadow-soft: 0 12px 32px rgba(0, 0, 0, 0.32);
+  --shadow-glow: 0 0 28px rgba(var(--tone-accent-rgb), 0.1);
 }
 
 @theme {
@@ -94,12 +99,14 @@
   --color-gold: var(--tone-gold);
   --color-gold-bright: var(--tone-gold-bright);
   --color-gold-on: var(--tone-gold-on);
+  --color-title: var(--tone-title);
+  --color-cream: var(--tone-cream);
   --color-ink-secondary: var(--tone-ink-secondary);
 
   --color-ink: var(--tone-ink);
   --color-ink-muted: var(--tone-ink-muted);
   --color-on-brand: var(--tone-ink);
-  --color-on-brand-muted: rgba(230, 234, 242, 0.72);
+  --color-on-brand-muted: rgba(238, 242, 249, 0.72);
 
   --color-cell: var(--tone-cell);
   --color-cell-calc: var(--tone-tint);
@@ -109,17 +116,17 @@
 
   --color-baja: #3a2428;
   --color-baja-border: #a08088;
-  --color-baja-text: #ffb4ab;
+  --color-baja-text: #ef7466;
 
   --color-estado-activo-cell: transparent;
   --color-estado-activo-input: #14532d;
-  --color-estado-activo-border: #86efac;
-  --color-estado-activo-text: #86efac;
+  --color-estado-activo-border: #58d49a;
+  --color-estado-activo-text: #58d49a;
 
   --color-estado-baja-cell: transparent;
   --color-estado-baja-input: #5f2436;
-  --color-estado-baja-border: #ffb4ab;
-  --color-estado-baja-text: #ffb4ab;
+  --color-estado-baja-border: #ef7466;
+  --color-estado-baja-text: #ef7466;
 
   --color-estado-reembolso-cell: transparent;
   --color-estado-reembolso-input: #1a2834;
@@ -129,18 +136,18 @@
   --color-chip-base: var(--tone-white);
   --color-chip-activos: #14532d;
   --color-chip-devoluciones: #5f2436;
-  --color-chip-recaudado: #86efac;
-  --color-chip-saldo: #fde68a;
+  --color-chip-recaudado: #58d49a;
+  --color-chip-saldo: #dbb85f;
   --color-chip-saldo-soft: #3a2428;
-  --color-text-activos: #86efac;
-  --color-text-devoluciones: #ffb4ab;
+  --color-text-activos: #58d49a;
+  --color-text-devoluciones: #ef7466;
 
   --color-sec-white: var(--tone-sec-white);
   --color-sec-white-head: var(--tone-sec-white-head);
   --color-sec-blue: var(--tone-sec-blue);
   --color-sec-blue-head: var(--tone-sec-blue-head);
   --color-sec-bar: var(--tone-soft);
-  --color-sec-bar-text: var(--tone-gold);
+  --color-sec-bar-text: var(--tone-title);
   --color-sec-bar-muted: var(--tone-sec-bar-muted);
 
   --color-mark-green: var(--tone-mark-green);
@@ -150,6 +157,8 @@
   --color-mark-pending-bg: var(--tone-mark-pending-bg);
   --color-mark-pending-fg: var(--tone-mark-pending-fg);
   --color-mark-on: var(--tone-mark-on);
+
+  --shadow-soft: 0 12px 32px rgba(0, 0, 0, 0.32);
 }
 
 * {
@@ -211,7 +220,7 @@ body::before {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+  scrollbar-color: rgba(186, 198, 220, 0.35) transparent;
 }
 
 *::-webkit-scrollbar {
@@ -224,7 +233,7 @@ body::before {
 }
 
 *::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.35);
+  background: rgba(186, 198, 220, 0.35);
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: content-box;
@@ -270,15 +279,16 @@ input[type='date']::-webkit-calendar-picker-indicator {
 }
 
 .surface-header {
-  border-color: var(--tone-border);
-  background: rgba(12, 20, 34, 0.92);
+  border-color: var(--tone-border-strong);
+  background: var(--surface-header);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .surface-card {
-  border: 1px solid var(--tone-border);
-  background: rgba(16, 24, 39, 0.88);
+  border: 1px solid var(--tone-border-strong);
+  background: var(--surface-card);
   backdrop-filter: blur(16px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-soft);
 }
 
 .btn-accent {
@@ -288,30 +298,49 @@ input[type='date']::-webkit-calendar-picker-indicator {
   gap: 0.5rem;
   font-family: var(--font-display);
   font-weight: 600;
-  color: var(--tone-gold);
-  border: 1px solid var(--tone-accent-ring);
-  background: var(--tone-accent-fill);
-  transition: background-color 0.15s ease;
+  color: #041018;
+  border: 1px solid transparent;
+  background: var(--tone-accent);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
+  transition: filter 0.15s ease, background-color 0.15s ease;
 }
 
 .btn-accent:hover:not(:disabled) {
-  background: var(--tone-accent-fill-hover);
+  filter: brightness(1.07);
+  background: var(--tone-accent);
 }
 
 .field-input {
-  border: 1px solid var(--tone-border);
-  background: rgba(8, 14, 24, 0.82);
+  border: 1px solid var(--tone-border-strong);
+  background: var(--surface-input);
   color: var(--tone-ink);
   outline: none;
-  transition: border-color 0.15s ease;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .field-input:focus {
+  border-color: var(--tone-accent);
+  background: rgba(12, 18, 30, 0.98);
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tone-title);
+  border: 1px solid var(--tone-border-strong);
+  background: var(--tone-panel-2);
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.btn-icon:hover:not(:disabled) {
   border-color: var(--tone-accent-ring);
+  background: var(--tone-accent-fill);
+  color: var(--tone-title);
 }
 
 .btn-totality-primary {
-  background: linear-gradient(135deg, var(--tone-gold) 0%, var(--tone-gold-bright) 100%);
+  background: linear-gradient(135deg, #f8fafc 0%, var(--tone-gold) 100%);
   color: var(--tone-gold-on);
   box-shadow: 0 4px 20px rgba(var(--tone-gold-rgb), 0.2);
 }
