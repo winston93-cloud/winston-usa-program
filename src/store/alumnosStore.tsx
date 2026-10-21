@@ -27,6 +27,8 @@ export type SyncPagosResult = {
   nuevos: Alumno[]
   /** Primer pago recién detectado → generar y enviar carta. */
   pagosNuevos: Alumno[]
+  /** Primer pago sin carta de bienvenida (incluye sync previo o carga inicial). */
+  pendientesCarta: Alumno[]
 }
 
 const TABLE = 'usa_programa_alumno'
@@ -195,11 +197,11 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
     }
     const rows = (data ?? []) as Omit<
       SyncPagosResult,
-      'nuevos' | 'pagosNuevos'
+      'nuevos' | 'pagosNuevos' | 'pendientesCarta'
     >[]
     const result = Array.isArray(rows)
       ? rows[0]
-      : (data as Omit<SyncPagosResult, 'nuevos' | 'pagosNuevos'>)
+      : (data as Omit<SyncPagosResult, 'nuevos' | 'pagosNuevos' | 'pendientesCarta'>)
 
     const { data: listData, error: listErr } = await insforge.database.rpc(
       'usa_programa_list',
@@ -219,12 +221,16 @@ export function AlumnosProvider({ children }: { children: ReactNode }) {
       const teniaPago = beforePago1.get(a.id) === true
       return !teniaPago
     })
+    const pendientesCarta = list.filter(
+      (a) => Boolean(a.fechaPago1?.trim()) && !a.fechaCorreoBienvenida?.trim(),
+    )
     return {
       inserted: result?.inserted ?? 0,
       updated: result?.updated ?? 0,
       alumnos: result?.alumnos ?? list.length,
       nuevos,
       pagosNuevos,
+      pendientesCarta,
     }
   }, [alumnos])
 

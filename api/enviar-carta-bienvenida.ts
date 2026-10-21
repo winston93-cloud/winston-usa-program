@@ -18,6 +18,11 @@ import {
   mailSendErrorMessage,
   smtpAvisos,
 } from './_lib/mailSmtp.js'
+import {
+  fechaCartaBienvenida,
+  marcarCartaBienvenida,
+} from './_lib/cartaEnvioGuard.js'
+import { hoyMexicoCity } from './_lib/vencimientosPagos.js'
 
 type Body = {
   to?: string
@@ -29,6 +34,8 @@ type Body = {
   folio?: string
   filename?: string
   pdfBase64?: string
+  /** Fila usa_programa_alumno: si ya tiene fecha, no se reenvía. */
+  alumnoId?: string
   /** Solo modo padre: notificar también a CE del nivel. */
   notificarCe?: boolean
 }
@@ -50,6 +57,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const body = (req.body ?? {}) as Body
+  const modo = parseModo(body.modo)
+  const alumnoId = (body.alumnoId || '').trim()
+
+  if (modo === 'padre' && alumnoId) {
+    const ya = await fechaCartaBienvenida(alumnoId)
+    if (ya) {
+      return res.status(200).json({
+        ok: true,
+        skipped: true,
+        alreadySent: true,
+        fechaCorreoBienvenida: ya,
+        alumnoId,
+      })
+    }
+  }
+
   const pdfBase64 = body.pdfBase64?.trim()
   if (!pdfBase64) {
     return res.status(400).json({ ok: false, error: 'Falta pdfBase64' })
@@ -59,8 +82,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if ('error' in smtp) {
     return res.status(500).json({ ok: false, error: smtp.error })
   }
-
-  const modo = parseModo(body.modo)
   const nivelLabel = body.nivelLabel || 'Primaria'
   const ceEmail = correoCePorNivel(nivelLabel)
   const requestedTo = (body.to || '').trim().toLowerCase()
@@ -138,8 +159,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ceMessageId = infoCe.messageId
     }
 
+    const fecha = hoyMexicoCity()
+    if (modo === 'padre' && alumnoId) {
+      await marcarCartaBienvenida(alumnoId, fecha)
+    }
+
     return res.status(200).json({
       ok: true,
+      skipped: false,
       modo,
       messageId: info.messageId,
       to,
@@ -148,6 +175,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ceNotificado: notificarCe,
       ceDestinoPrevisto: ceEmail,
       ceMessageId: ceMessageId ?? null,
+      fechaCorreoBienvenida: modo === 'padre' && alumnoId ? fecha : null,
     })
   } catch (err) {
     return res.status(500).json({ ok: false, error: mailSendErrorMessage(err) })

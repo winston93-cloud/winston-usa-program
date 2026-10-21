@@ -12,38 +12,44 @@
   --tone-ink-muted: #b0b9cb;
   --tone-ink-secondary: #c8d0e0;
   --tone-title: #ffffff;
-  --tone-cream: #f8fafc;
+  --tone-cream: #ffffff;
 
-  /* Acentos */
-  --tone-gold: #dbb85f;
-  --tone-gold-bright: #dbb85f;
-  --tone-gold-rgb: 219, 184, 95;
-  --tone-gold-on: #2a2208;
-  --tone-accent: #35c4e8;
-  --tone-accent-rgb: 53, 196, 232;
-  --tone-accent-2: #7a93f7;
-  --tone-accent-2-rgb: 122, 147, 247;
-  --tone-accent-hover: #5dd0ee;
-  --tone-accent-ring: rgba(var(--tone-accent-rgb), 0.5);
-  --tone-accent-fill: rgba(var(--tone-accent-rgb), 0.22);
-  --tone-accent-fill-hover: rgba(var(--tone-accent-rgb), 0.34);
-  --tone-accent-2-fill: rgba(var(--tone-accent-2-rgb), 0.2);
+  /* Marca lima (qr-entrada) */
+  --tone-lime: #d6ff1f;
+  --tone-lime-rgb: 212, 242, 85;
+  --tone-lime-deep: #82ad0c;
+  --tone-lime-deep-rgb: 130, 173, 12;
+  --tone-gold: #d4f255;
+  --tone-gold-bright: #d4f255;
+  --tone-gold-rgb: 212, 242, 85;
+  --tone-gold-on: #1a2208;
+  --tone-accent: #9eb83a;
+  --tone-accent-rgb: 158, 184, 58;
+  --tone-accent-2: #d4f255;
+  --tone-accent-2-rgb: 212, 242, 85;
+  --tone-accent-hover: #d4f255;
+  --tone-accent-ring: rgba(var(--tone-lime-deep-rgb), 0.4);
+  --tone-accent-fill: rgba(var(--tone-lime-deep-rgb), 0.22);
+  --tone-accent-fill-hover: rgba(var(--tone-lime-deep-rgb), 0.34);
+  --tone-accent-2-fill: rgba(var(--tone-lime-rgb), 0.14);
+  --hover-border: rgba(var(--tone-lime-rgb), 0.72);
+  --hover-fill: rgba(var(--tone-lime-rgb), 0.38);
 
-  /* Fondos: slate navy */
-  --tone-soft: #121c2e;
-  --tone-deep: #24334d;
+  /* Fondos slate navy */
+  --tone-soft: #0f1c33;
+  --tone-deep: #1b325c;
   --tone-brand: rgba(26, 39, 60, 0.96);
   --tone-aside: #182538;
-  --tone-panel-2: #1d2940;
+  --tone-panel-2: #1b325c;
   --tone-tint: #101826;
-  --tone-select-bg: #101826;
-  --tone-cell: #24334d;
-  --tone-sec-white: #24334d;
-  --tone-sec-blue: #24334d;
-  --tone-sec-bar-muted: #24334d;
-  --tone-sec-white-head: rgba(122, 147, 247, 0.14);
-  --tone-sec-blue-head: rgba(122, 147, 247, 0.14);
-  --tone-white: #24334d;
+  --tone-select-bg: #152844;
+  --tone-cell: #1b325c;
+  --tone-sec-white: #1b325c;
+  --tone-sec-blue: #1b325c;
+  --tone-sec-bar-muted: #1b325c;
+  --tone-sec-white-head: rgba(var(--tone-lime-rgb), 0.14);
+  --tone-sec-blue-head: rgba(var(--tone-lime-rgb), 0.14);
+  --tone-white: #1b325c;
 
   /* Bordes */
   --tone-border: rgba(186, 198, 220, 0.28);
@@ -52,10 +58,10 @@
 
   /* Superficies */
   --surface-header: rgba(26, 39, 60, 0.96);
-  --surface-card: rgba(34, 48, 73, 0.98);
+  --surface-card: #1b325c;
   --surface-aside: rgba(26, 39, 60, 0.99);
   --surface-input: rgba(16, 24, 38, 0.92);
-  --surface-panel: #24334d;
+  --surface-panel: #1b325c;
 
   /* Semántica de tabla (dominio USA) */
   --tone-mark-green: rgba(12, 131, 55, 0.8);
@@ -66,7 +72,7 @@
   --tone-mark-pending-fg: rgba(238, 242, 249, 0.22);
   --tone-mark-on: #ffffff;
 
-  --bg-atmosphere: linear-gradient(165deg, #1a2940 0%, #121c2e 42%, #0e1624 100%);
+  --bg-atmosphere: linear-gradient(165deg, #1a2438 0%, #0f1c33 42%, #0c121c 100%);
   --bg-grid-opacity: 0.045;
   --bg-grid-size: 48px;
   --bg-grid-line: rgba(200, 210, 230, 0.5);
@@ -137,7 +143,7 @@
   --color-chip-activos: #14532d;
   --color-chip-devoluciones: #5f2436;
   --color-chip-recaudado: #58d49a;
-  --color-chip-saldo: #dbb85f;
+  --color-chip-saldo: #d4f255;
   --color-chip-saldo-soft: #3a2428;
   --color-text-activos: #58d49a;
   --color-text-devoluciones: #ef7466;
@@ -284,11 +290,20 @@ input[type='date']::-webkit-calendar-picker-indicator {
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
+.surface-panel {
+  border: 1px solid var(--tone-border);
+  background: var(--surface-panel);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.045),
+    0 8px 20px rgba(0, 0, 0, 0.18);
+}
+
 .surface-card {
-  border: 1px solid var(--tone-border-strong);
-  background: var(--surface-card);
-  backdrop-filter: blur(16px);
-  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--tone-border);
+  background: var(--surface-panel);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.045),
+    0 8px 20px rgba(0, 0, 0, 0.18);
 }
 
 .btn-accent {
@@ -298,16 +313,15 @@ input[type='date']::-webkit-calendar-picker-indicator {
   gap: 0.5rem;
   font-family: var(--font-display);
   font-weight: 600;
-  color: #041018;
+  color: #f1f1f1;
   border: 1px solid transparent;
-  background: var(--tone-accent);
+  background: var(--tone-lime-deep);
   box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
-  transition: filter 0.15s ease, background-color 0.15s ease;
+  transition: background-color 0.15s ease;
 }
 
 .btn-accent:hover:not(:disabled) {
-  filter: brightness(1.07);
-  background: var(--tone-accent);
+  background: rgba(var(--tone-lime-deep-rgb), 0.88);
 }
 
 .field-input {
@@ -319,7 +333,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 }
 
 .field-input:focus {
-  border-color: var(--tone-accent);
+  border-color: var(--tone-lime-deep);
   background: rgba(12, 18, 30, 0.98);
 }
 
@@ -330,12 +344,13 @@ input[type='date']::-webkit-calendar-picker-indicator {
   color: var(--tone-title);
   border: 1px solid var(--tone-border-strong);
   background: var(--tone-panel-2);
+  border-radius: 0.65rem;
   transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
 
 .btn-icon:hover:not(:disabled) {
-  border-color: var(--tone-accent-ring);
-  background: var(--tone-accent-fill);
+  border-color: var(--hover-border);
+  background: var(--hover-fill);
   color: var(--tone-title);
 }
 

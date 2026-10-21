@@ -1,10 +1,14 @@
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
+import { devApiPlugin } from './vite-plugin-dev-api.ts'
 
 export default defineConfig(({ mode }) => {
   // loadEnv + process.env: Vercel inyecta en process.env en el build.
   const fileEnv = loadEnv(mode, process.cwd(), '')
+  for (const [key, value] of Object.entries(fileEnv)) {
+    if (process.env[key] === undefined && value) process.env[key] = value
+  }
   const url = process.env.INSFORGE_URL ?? fileEnv.INSFORGE_URL ?? ''
   const anonKey =
     process.env.INSFORGE_ANON_KEY ?? fileEnv.INSFORGE_ANON_KEY ?? ''
@@ -16,7 +20,7 @@ export default defineConfig(({ mode }) => {
     ''
 
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), devApiPlugin()],
     envPrefix: ['INSFORGE_', 'USA_'],
     define: {
       'import.meta.env.INSFORGE_URL': JSON.stringify(url),

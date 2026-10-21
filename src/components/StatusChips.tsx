@@ -35,14 +35,14 @@ const CHIP_GAP_CLASS = 'gap-2'
 const CHIP_STYLE: Record<string, { idle: string; active: string; dot: string }> =
   {
     'chip-todos': {
-      idle: 'border-sky-600/15 bg-sky-700/10 text-sky-200/85',
-      active: 'border-sky-500/10 bg-sky-600/35 text-sky-100',
-      dot: 'bg-sky-400/70',
+      idle: 'border-[var(--tone-border-strong)] bg-[var(--tone-panel-2)] text-ink-muted',
+      active: 'border-[var(--hover-border)] bg-[var(--hover-fill)] text-title',
+      dot: 'bg-[var(--tone-lime)]',
     },
     'chip-inscritos': {
-      idle: 'border-sky-600/25 bg-sky-700/10 text-sky-200/85',
-      active: 'border-sky-500/10 bg-sky-600/35 text-sky-100',
-      dot: 'bg-sky-400/70',
+      idle: 'border-[var(--tone-border-strong)] bg-[var(--tone-panel-2)] text-ink-muted',
+      active: 'border-[var(--hover-border)] bg-[var(--hover-fill)] text-title',
+      dot: 'bg-[var(--tone-lime)]',
     },
     'chip-activos': {
       idle: 'border-emerald-700/25 bg-emerald-800/10 text-emerald-250/90',
@@ -55,9 +55,9 @@ const CHIP_STYLE: Record<string, { idle: string; active: string; dot: string }> 
       dot: 'bg-emerald-400/70',
     },
     'chip-archivo': {
-      idle: 'border-sky-600/25 bg-sky-700/10 text-sky-200/85',
-      active: 'border-sky-500/10 bg-sky-600/35 text-sky-100',
-      dot: 'bg-sky-400/70',
+      idle: 'border-[var(--tone-border-strong)] bg-[var(--tone-panel-2)] text-ink-muted',
+      active: 'border-[var(--hover-border)] bg-[var(--hover-fill)] text-title',
+      dot: 'bg-[var(--tone-lime)]',
     },
     'chip-devoluciones': {
       idle: 'border-rose-700/25 bg-rose-900/10 text-rose-250/90',

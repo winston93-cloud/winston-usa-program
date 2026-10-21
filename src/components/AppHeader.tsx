@@ -20,12 +20,12 @@ type Props = {
   canSync?: boolean
 }
 
-/** Mismo chip que el bloque de usuario (accent-2 fill). */
+/** Chips del header: mismo hover lima que qr-entrada. */
 const chrome =
-  'inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--tone-border-strong)] bg-[rgba(122,147,247,0.2)] px-3 text-sm font-semibold text-title transition-[border-color,background-color] duration-150 hover:border-[var(--tone-accent-ring)] hover:bg-[rgba(122,147,247,0.3)]'
+  'inline-flex h-10 items-center gap-2 rounded-[0.65rem] border border-[var(--tone-border-strong)] bg-[var(--tone-panel-2)] px-3 text-sm font-semibold text-title transition-[border-color,background-color] duration-150 hover:border-[var(--hover-border)] hover:bg-[var(--hover-fill)]'
 
 const iconBtn =
-  'inline-flex size-10 shrink-0 items-center justify-center rounded-xl border border-[var(--tone-border-strong)] bg-[rgba(122,147,247,0.2)] text-title transition-[border-color,background-color] duration-150 hover:border-[var(--tone-accent-ring)] hover:bg-[rgba(122,147,247,0.3)] disabled:cursor-wait disabled:opacity-60'
+  'btn-icon size-10 shrink-0 disabled:cursor-wait disabled:opacity-60'
 
 export function AppHeader({
   onHelp,
@@ -66,7 +66,7 @@ export function AppHeader({
             <select
               value={nivel}
               onChange={(e) => onNivel(e.target.value as Nivel | 'Todos')}
-              className="h-7 rounded-md border border-[var(--tone-border-strong)] bg-[rgba(16,24,38,0.55)] px-2 text-sm font-medium text-title normal-case outline-none focus:border-[var(--tone-accent)]"
+              className="h-7 rounded-md border border-[var(--tone-border-strong)] bg-[rgba(16,24,38,0.55)] px-2 text-sm font-medium text-title normal-case outline-none focus:border-[var(--tone-lime-deep)]"
             >
               <option value="Todos">Todos</option>
               {NIVELES.map((n) => (
@@ -105,7 +105,7 @@ export function AppHeader({
           </button>
 
           <div
-            className={`${chrome} max-w-[8.5rem] flex-col justify-center gap-0!`}
+            className={`${chrome} max-w-[8.5rem] flex-col justify-center gap-0`}
             title={`${session.label} · ${session.nombre} · ${session.email}`}
           >
             <span className="truncate text-[0.65rem] font-semibold tracking-wide text-ink-muted uppercase">

@@ -9,6 +9,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "cartas": "tsx scripts/generate-cartas.ts",
+    "cartas:enviar": "tsx scripts/enviar-cartas-pendientes.ts",
     "correos:prueba": "tsx scripts/probar-correos.ts prueba",
     "correos:padre": "tsx scripts/probar-correos.ts padre"
   },

@@ -214,7 +214,6 @@ export function LoginPage() {
             redirectTo: window.location.origin,
             additionalParams: {
               prompt: 'select_account',
-              hd: 'winston93.edu.mx',
             },
           },
         )
@@ -237,7 +236,7 @@ export function LoginPage() {
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-10">
         <form
           onSubmit={onSubmit}
-          className="surface-card rounded-2xl p-6 shadow-soft sm:p-8"
+          className="surface-panel rounded-2xl px-6 py-10 shadow-soft sm:px-8 sm:py-12"
           noValidate
         >
           <div className="mb-8 flex flex-col items-center text-center">

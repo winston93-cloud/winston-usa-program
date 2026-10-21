@@ -23,6 +23,8 @@ function bytesToBase64(bytes: Uint8Array): string {
 
 export type EnvioCartaResult = {
   ok: boolean
+  skipped?: boolean
+  id: string
   folio: string
   modo?: ModoCorreoCarta
   to?: string
@@ -50,9 +52,20 @@ export async function enviarCartaBienvenidaPorCorreo(
   if (!alumno.nombreCompleto?.trim()) {
     return {
       ok: false,
+      id: alumno.id,
       folio: alumno.folio,
       modo,
       error: 'Sin nombre de alumno',
+    }
+  }
+
+  if (modo === 'padre' && !opts.toOverride && alumno.fechaCorreoBienvenida?.trim()) {
+    return {
+      ok: true,
+      skipped: true,
+      id: alumno.id,
+      folio: alumno.folio,
+      modo,
     }
   }
 
@@ -60,6 +73,7 @@ export async function enviarCartaBienvenidaPorCorreo(
   if (modo === 'padre' && !opts.toOverride && !tutor) {
     return {
       ok: false,
+      id: alumno.id,
       folio: alumno.folio,
       modo,
       error: 'Sin correo del tutor',
@@ -94,6 +108,7 @@ export async function enviarCartaBienvenidaPorCorreo(
       replyTo,
       alumnoNombre: alumno.nombreCompleto,
       folio: alumno.folio,
+      alumnoId: alumno.id,
       filename,
       pdfBase64: bytesToBase64(bytes),
       // Producción ciclo actual: aviso a Control Escolar del nivel.
@@ -103,6 +118,7 @@ export async function enviarCartaBienvenidaPorCorreo(
 
   const data = (await res.json().catch(() => ({}))) as {
     ok?: boolean
+    skipped?: boolean
     error?: string
     to?: string
     replyTo?: string
@@ -112,6 +128,7 @@ export async function enviarCartaBienvenidaPorCorreo(
   if (!res.ok || !data.ok) {
     return {
       ok: false,
+      id: alumno.id,
       folio: alumno.folio,
       modo,
       error: data.error || `HTTP ${res.status}`,
@@ -120,6 +137,8 @@ export async function enviarCartaBienvenidaPorCorreo(
 
   return {
     ok: true,
+    skipped: data.skipped === true,
+    id: alumno.id,
     folio: alumno.folio,
     modo: data.modo ?? modo,
     to: data.to ?? to,
@@ -129,20 +148,28 @@ export async function enviarCartaBienvenidaPorCorreo(
 
 export async function enviarCartasBienvenidaPorPago(
   alumnos: Alumno[],
-): Promise<{ ok: number; fail: number; errors: string[] }> {
+): Promise<{
+  ok: number
+  fail: number
+  errors: string[]
+  results: EnvioCartaResult[]
+}> {
   let ok = 0
   let fail = 0
   const errors: string[] = []
+  const results: EnvioCartaResult[] = []
   for (const alumno of alumnos) {
     // Sync operativo: contenido de producción hacia el tutor.
     const result = await enviarCartaBienvenidaPorCorreo(alumno, {
       modo: 'padre',
     })
+    results.push(result)
+    if (result.skipped) continue
     if (result.ok) ok += 1
     else {
       fail += 1
       errors.push(`${result.folio}: ${result.error ?? 'error'}`)
     }
   }
-  return { ok, fail, errors }
+  return { ok, fail, errors, results }
 }

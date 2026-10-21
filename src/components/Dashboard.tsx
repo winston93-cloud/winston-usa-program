@@ -1,14 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { AlumnoPatch, ChipFiltro, Nivel } from '../types/alumno'
+import type { Alumno, AlumnoPatch, ChipFiltro, Nivel } from '../types/alumno'
+import { isAlumnoPrueba } from '../lib/alumnoPrueba'
 import { chipCounts, filterAlumnos, kpis } from '../lib/pagos'
 import { notificarBajaReembolso } from '../lib/notificarBajaReembolso'
-import { useAlumnos } from '../store/alumnosStore'
+import { hoyMexicoCity } from '../lib/vencimientosPagos'
+import { useAlumnos, type SyncPagosResult } from '../store/alumnosStore'
 import { useAuth } from '../store/authStore'
 import { AlumnosTable } from './AlumnosTable'
 import { AppHeader } from './AppHeader'
 import { InstructionsModal } from './InstructionsModal'
 import { StatusChips } from './StatusChips'
 import { useToast } from './Toast'
+
+/** Evita doble envío de cartas en Strict Mode / remount. */
+let autoSyncSesionHecho = false
+const cartasEnCurso = new Set<string>()
 
 export function Dashboard() {
   const {
@@ -29,9 +35,95 @@ export function Dashboard() {
   const [search, setSearch] = useState('')
   const [infoOpen, setInfoOpen] = useState(false)
 
+  const enviarPendientesCarta = useCallback(
+    async (pendientes: Alumno[]) => {
+      const batch = pendientes.filter(
+        (a) =>
+          !isAlumnoPrueba(a.id) &&
+          Boolean(a.fechaPago1?.trim()) &&
+          !a.fechaCorreoBienvenida?.trim() &&
+          !cartasEnCurso.has(a.id),
+      )
+      if (batch.length === 0) return
+      for (const a of batch) cartasEnCurso.add(a.id)
+      try {
+        const { enviarCartasBienvenidaPorPago } = await import(
+          '../lib/enviarCartaBienvenidaMail'
+        )
+        const envio = await enviarCartasBienvenidaPorPago(batch)
+        const hoy = hoyMexicoCity()
+        for (const r of envio.results) {
+          if (r.skipped) continue
+          if (r.ok) {
+            updateAlumno(r.id, { fechaCorreoBienvenida: hoy })
+          } else {
+            cartasEnCurso.delete(r.id)
+          }
+        }
+        if (envio.ok > 0) {
+          pushToast(`Cartas de bienvenida enviadas: ${envio.ok}.`, 'success')
+        }
+        if (envio.fail > 0) {
+          pushToast(
+            `No se enviaron ${envio.fail} carta(s): ${envio.errors.slice(0, 2).join('; ')}`,
+            'error',
+          )
+        }
+      } catch (e) {
+        for (const a of batch) cartasEnCurso.delete(a.id)
+        pushToast(
+          e instanceof Error
+            ? e.message
+            : 'No se pudieron enviar las cartas por correo',
+          'error',
+        )
+      }
+    },
+    [pushToast, updateAlumno],
+  )
+
+  const correrSync = useCallback(
+    async (opts?: { silencioso?: boolean }) => {
+      const result: SyncPagosResult | null = await syncFromPagos()
+      if (!result) return
+      if (!opts?.silencioso) {
+        pushToast(
+          `Pagos sincronizados: ${result.alumnos} alumno(s) (${result.inserted} nuevos, ${result.updated} actualizados).`,
+          'success',
+        )
+        setChip('todos')
+      } else if (result.inserted > 0 || result.updated > 0) {
+        pushToast(
+          `Pagos del ciclo: ${result.alumnos} alumno(s) (${result.inserted} nuevos).`,
+          'success',
+        )
+      }
+      await enviarPendientesCarta(result.pendientesCarta)
+    },
+    [syncFromPagos, pushToast, enviarPendientesCarta],
+  )
+
   useEffect(() => {
     if (session?.nivelEditable) setNivel(session.nivelEditable)
   }, [session?.nivelEditable])
+
+  useEffect(() => {
+    if (autoSyncSesionHecho || !isAdmin || loading) return
+    autoSyncSesionHecho = true
+    void correrSync({ silencioso: true })
+  }, [isAdmin, loading, correrSync])
+
+  useEffect(() => {
+    if (!isAdmin || loading) return
+    const pendientes = alumnos.filter(
+      (a) =>
+        !isAlumnoPrueba(a.id) &&
+        Boolean(a.fechaPago1?.trim()) &&
+        !a.fechaCorreoBienvenida?.trim(),
+    )
+    if (pendientes.length === 0) return
+    void enviarPendientesCarta(pendientes)
+  }, [isAdmin, loading, alumnos, enviarPendientesCarta])
 
   useEffect(() => {
     if (!error) return
@@ -101,50 +193,7 @@ export function Dashboard() {
         onLogout={logout}
         canSync={isAdmin}
         onSync={() => {
-          void (async () => {
-            const result = await syncFromPagos()
-            if (!result) return
-            pushToast(
-              `Pagos sincronizados: ${result.alumnos} alumno(s) (${result.inserted} nuevos, ${result.updated} actualizados).`,
-              'success',
-            )
-            setChip('todos')
-            if (result.pagosNuevos.length > 0) {
-              try {
-                const { enviarCartasBienvenidaPorPago } = await import(
-                  '../lib/enviarCartaBienvenidaMail'
-                )
-                const envio = await enviarCartasBienvenidaPorPago(
-                  result.pagosNuevos,
-                )
-                if (envio.ok > 0) {
-                  pushToast(
-                    `Cartas de bienvenida enviadas: ${envio.ok}.`,
-                    'success',
-                  )
-                  const hoy = new Date().toISOString().slice(0, 10)
-                  for (const a of result.pagosNuevos) {
-                    if (!a.fechaCorreoBienvenida) {
-                      updateAlumno(a.id, { fechaCorreoBienvenida: hoy })
-                    }
-                  }
-                }
-                if (envio.fail > 0) {
-                  pushToast(
-                    `No se enviaron ${envio.fail} carta(s): ${envio.errors.slice(0, 2).join('; ')}`,
-                    'error',
-                  )
-                }
-              } catch (e) {
-                pushToast(
-                  e instanceof Error
-                    ? e.message
-                    : 'No se pudieron enviar las cartas por correo',
-                  'error',
-                )
-              }
-            }
-          })()
+          void correrSync()
         }}
       />
       <main className="mx-auto max-w-[1400px] flex min-h-0 w-full flex-1 flex-col gap-2 px-2 py-2 sm:gap-2.5 sm:px-3 sm:py-3 md:px-4 md:py-4 lg:px-5">

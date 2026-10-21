@@ -51,9 +51,11 @@ export function normalizeEmail(email: string): string {
 export const DEMO_EMAIL = 'prueba@winston93.edu.mx'
 
 /**
- * Allowlist USA Program (Google / InsForge):
- * - Sistemas y Dirección académica → admin (todo)
- * - Control Escolar por nivel → solo su nivel
+ * Allowlist USA Program (Google / InsForge), mismos correos que
+ * public.usuario en servicios_admin:
+ * - Sistemas (sistemas@, sistemas2@, sistemas3@, sistemas.desarrollo@) → admin
+ * - Dirección académica → admin
+ * - Control Escolar por nivel (iew / primaria / secundaria) → solo su nivel
  * - Validar archivo final → solo CE Primaria (+ admins)
  */
 export function resolveAccessByEmail(emailRaw: string): UsaAccess | null {

@@ -89,16 +89,56 @@ export async function loginManualClient(
   return sessionFromAuthRow(user)
 }
 
-/** Login Google con access_token (GIS) + allowlist. */
+function sessionDesdeEmail(emailRaw: string, displayName?: string): UsaSession {
+  const access = resolveAccessByEmail(emailRaw)
+  if (!access) {
+    throw new Error(
+      'Este correo de Google no tiene acceso. Solo Sistemas y Control Escolar.',
+    )
+  }
+  return {
+    ...access,
+    nombre: displayName?.trim() || access.label,
+    usuario: access.email.split('@')[0] || access.email,
+    exp: Date.now() + 12 * 60 * 60 * 1000,
+  }
+}
+
+/** Login Google con access_token (GIS, igual que servicios_admin) + allowlist. */
 export async function loginGoogleClient(accessToken: string): Promise<UsaSession> {
   const token = accessToken.trim()
   if (!token) throw new Error('Falta el token de Google')
+
+  const apiRes = await fetch('/api/auth/google', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ accessToken: token }),
+  })
+  const apiData = (await apiRes.json().catch(() => ({}))) as {
+    ok?: boolean
+    error?: string
+    session?: UsaSession
+  }
+  if (apiRes.ok && apiData.ok && apiData.session?.email) {
+    return {
+      ...apiData.session,
+      exp: apiData.session.exp || Date.now() + 12 * 60 * 60 * 1000,
+    }
+  }
+  if (apiRes.status === 403 || apiRes.status === 401) {
+    throw new Error(
+      apiData.error ||
+        'Este correo de Google no tiene acceso. Solo Sistemas y Control Escolar.',
+    )
+  }
 
   const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
     headers: { Authorization: `Bearer ${token}` },
   })
   if (!userRes.ok) {
-    throw new Error('No se pudo validar la sesión de Google')
+    throw new Error(
+      apiData.error || 'No se pudo validar la sesión de Google',
+    )
   }
   const user = (await userRes.json()) as {
     email?: string
@@ -116,18 +156,5 @@ export async function loginGoogleClient(accessToken: string): Promise<UsaSession
   if (!email.endsWith('@winston93.edu.mx')) {
     throw new Error('Solo se permiten cuentas @winston93.edu.mx')
   }
-
-  const access = resolveAccessByEmail(email)
-  if (!access) {
-    throw new Error(
-      'Este correo de Google no tiene acceso. Solo Sistemas y Control Escolar.',
-    )
-  }
-
-  return {
-    ...access,
-    nombre: user.name || access.label,
-    usuario: email.split('@')[0] || email,
-    exp: Date.now() + 12 * 60 * 60 * 1000,
-  }
+  return sessionDesdeEmail(email, user.name)
 }

@@ -86,32 +86,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const completeGoogleInsforgeSession = useCallback(async () => {
-    const { data, error } = await insforge.auth.getCurrentUser()
-    if (error || !data?.user?.email) {
-      return false
+    const params = new URLSearchParams(window.location.search)
+    const comingFromOAuth = params.has('insforge_code') || params.has('code')
+    const intentos = comingFromOAuth ? 8 : 1
+    for (let i = 0; i < intentos; i += 1) {
+      const { data, error } = await insforge.auth.getCurrentUser()
+      if (!error && data?.user?.email) {
+        const access = resolveAccessByEmail(data.user.email)
+        if (!access) {
+          await insforge.auth.signOut()
+          throw new Error(
+            'Este correo de Google no tiene acceso. Solo Sistemas y Control Escolar.',
+          )
+        }
+        const profileName =
+          data.user.profile &&
+          typeof data.user.profile === 'object' &&
+          'name' in data.user.profile
+            ? String((data.user.profile as { name?: string }).name ?? '').trim()
+            : ''
+        const next: UsaSession = {
+          ...access,
+          nombre: profileName || access.label,
+          usuario: data.user.email.split('@')[0] || data.user.email,
+          exp: Date.now() + 12 * 60 * 60 * 1000,
+        }
+        persist(next)
+        setSession(next)
+        return true
+      }
+      if (!comingFromOAuth) break
+      await new Promise((r) => setTimeout(r, 150))
     }
-    const access = resolveAccessByEmail(data.user.email)
-    if (!access) {
-      await insforge.auth.signOut()
-      throw new Error(
-        'Este correo de Google no tiene acceso. Solo Sistemas y Control Escolar.',
-      )
-    }
-    const profileName =
-      data.user.profile &&
-      typeof data.user.profile === 'object' &&
-      'name' in data.user.profile
-        ? String((data.user.profile as { name?: string }).name ?? '').trim()
-        : ''
-    const next: UsaSession = {
-      ...access,
-      nombre: profileName || access.label,
-      usuario: data.user.email.split('@')[0] || data.user.email,
-      exp: Date.now() + 12 * 60 * 60 * 1000,
-    }
-    persist(next)
-    setSession(next)
-    return true
+    return false
   }, [])
 
   const logout = useCallback(() => {
