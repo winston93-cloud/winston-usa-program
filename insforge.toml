@@ -1,6 +1,22 @@
 [auth]
-# Vacío = permite cualquier redirect (dev). En prod conviene listar orígenes exactos.
-allowed_redirect_urls = []
+# Orígenes exactos (InsForge no acepta vacío como “cualquiera”).
+# Conservar /login de qr-entrada y el origin de usa-program.
+allowed_redirect_urls = [
+  "http://127.0.0.1:3000/login",
+  "http://127.0.0.1:4173/login",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:5173/login",
+  "http://127.0.0.1:5174",
+  "http://127.0.0.1:5175",
+  "http://localhost:3000/login",
+  "http://localhost:4173/login",
+  "http://localhost:5173",
+  "http://localhost:5173/login",
+  "http://localhost:5174",
+  "http://localhost:5175",
+  "https://winston-usa-program.vercel.app",
+  "https://winston-usa-program.vercel.app/",
+]
 require_email_verification = true
 verify_email_method = "code"
 reset_password_method = "code"

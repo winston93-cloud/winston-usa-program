@@ -29,7 +29,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(403).json({
         ok: false,
         error:
-          'Este correo de Google no tiene acceso. Solo Sistemas y Control Escolar.',
+          'Este correo de Google no tiene acceso. Solo Sistemas, Dirección académica y Control Escolar.',
       })
     }
     const session = {

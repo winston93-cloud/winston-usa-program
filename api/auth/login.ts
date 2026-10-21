@@ -77,7 +77,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(403).json({
       ok: false,
       error:
-        'Esta cuenta no tiene acceso al programa USA (solo Sistemas y Control Escolar).',
+        'Esta cuenta no tiene acceso al programa USA (solo Sistemas, Dirección académica y Control Escolar).',
     })
   }
 

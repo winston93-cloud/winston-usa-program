@@ -34,7 +34,7 @@ function sessionFromAuthRow(user: AuthLoginRow, displayName?: string): UsaSessio
   const access = resolveAccessByEmail(user.usuario_email)
   if (!access) {
     throw new Error(
-      'Esta cuenta no tiene acceso al programa USA (solo Sistemas y Control Escolar).',
+      'Esta cuenta no tiene acceso al programa USA (solo Sistemas, Dirección académica y Control Escolar).',
     )
   }
   const nombre =
@@ -93,7 +93,7 @@ function sessionDesdeEmail(emailRaw: string, displayName?: string): UsaSession {
   const access = resolveAccessByEmail(emailRaw)
   if (!access) {
     throw new Error(
-      'Este correo de Google no tiene acceso. Solo Sistemas y Control Escolar.',
+      'Este correo de Google no tiene acceso. Solo Sistemas, Dirección académica y Control Escolar.',
     )
   }
   return {
@@ -128,7 +128,7 @@ export async function loginGoogleClient(accessToken: string): Promise<UsaSession
   if (apiRes.status === 403 || apiRes.status === 401) {
     throw new Error(
       apiData.error ||
-        'Este correo de Google no tiene acceso. Solo Sistemas y Control Escolar.',
+        'Este correo de Google no tiene acceso. Solo Sistemas, Dirección académica y Control Escolar.',
     )
   }
 

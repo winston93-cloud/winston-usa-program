@@ -96,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!access) {
           await insforge.auth.signOut()
           throw new Error(
-            'Este correo de Google no tiene acceso. Solo Sistemas y Control Escolar.',
+            'Este correo de Google no tiene acceso. Solo Sistemas, Dirección académica y Control Escolar.',
           )
         }
         const profileName =
